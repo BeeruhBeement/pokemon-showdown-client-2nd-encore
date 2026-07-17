@@ -7,7 +7,7 @@ const child_process = require('node:child_process');
 process.chdir(__dirname + '/..');
 
 if (!fs.existsSync('caches/pokemon-showdown')) {
-	child_process.execSync('git clone https://github.com/BeeruhBeement/pokemon-showdown.git', {
+	child_process.execSync('git clone https://github.com/smogon/pokemon-showdown.git', {
 		cwd: 'caches',
 	});
 }
@@ -20,15 +20,6 @@ console.log("DONE");
 const Dex = require('../caches/pokemon-showdown/dist/sim/dex').Dex;
 const CompoundWordNames = require('../caches/pokemon-showdown/dist/data/aliases').CompoundWordNames;
 const toID = Dex.toID;
-const originalDexMod = Dex.mod.bind(Dex);
-const dexModAliases = {
-	hellskitchen: 'gen9hellskitchen',
-};
-Dex.mod = function modWithAliases(mod) {
-	const resolvedMod = dexModAliases[mod] || mod;
-	return originalDexMod(resolvedMod);
-};
-
 process.stdout.write("Loading gen 6 data... ");
 Dex.includeData();
 console.log("DONE");
@@ -64,7 +55,7 @@ function requireNoCache(pathSpec) {
 		'monster', 'water1', 'bug', 'flying', 'field', 'fairy', 'grass', 'humanlike', 'water3', 'mineral', 'amorphous', 'water2', 'ditto', 'dragon', 'undiscovered',
 	].map(x => toID(x) + ' egggroup'));
 	index = index.concat([
-		'ou', 'uu', 'ru', 'nu', 'pu', 'zu', 'su', 'lc', 'nfe', 'uber', 'uubl', 'rubl', 'nubl', 'publ', 'zubl', 'subl', 'cap', 'caplc', 'capnfe',
+		'ou', 'uu', 'ru', 'nu', 'pu', 'zu', 'lc', 'nfe', 'uber', 'uubl', 'rubl', 'nubl', 'publ', 'zubl', 'cap', 'caplc', 'capnfe',
 	].map(x => toID(x) + ' tier'));
 
 	const BattleArticleTitles = {};
@@ -91,10 +82,10 @@ function requireNoCache(pathSpec) {
 
 	const compoundTable = new Map(CompoundWordNames.map(word => [toID(word), word]));
 	// generate aliases
-	function generateAlias(id, name, type, dex) {
+	function generateAlias(id, name, type) {
 		name = compoundTable.get(id) || name;
 		if (type === 'pokemon' && !compoundTable.has(id)) {
-			const species = dex ? dex.species.get(id) : Dex.species.get(id);
+			const species = Dex.species.get(id);
 			const baseid = toID(species.baseSpecies);
 			if (baseid !== id) {
 				name = (compoundTable.get(baseid) || species.baseSpecies) + ' ' + species.forme;
@@ -130,63 +121,22 @@ function requireNoCache(pathSpec) {
 			}
 		}
 	}
-
-	const allDexes = [
-		Dex,
-		Dex.mod('gen9hellskitchen'),
-	];
-
-	for (const dex of allDexes) {
-		for (const id in dex.data.Pokedex) {
-			const name = dex.data.Pokedex[id].name;
-
-			if (dex.data.Pokedex[id].isCosmeticForme) continue;
-
-			if (!name) {
-				console.log('Missing name:', id, dex.modid);
-				continue;
-			}
-
-			generateAlias(id, name, 'pokemon', dex);
-		}
-
-		for (const id in dex.data.Moves) {
-			const name = dex.data.Moves[id].name;
-			
-			if (!name) {
-				console.log('Missing name:', id, dex.modid);
-				continue;
-			}
-
-			generateAlias(id, name, 'move', dex);
-		}
-
-		for (const id in dex.data.Items) {
-			const name = dex.data.Items[id].name;
-			
-			if (!name) {
-				console.log('Missing name:', id, dex.modid);
-				continue;
-			}
-
-			generateAlias(id, name, 'item', dex);
-		}
-
-		for (const id in dex.data.Abilities) {
-			const name = dex.data.Abilities[id].name;
-			
-			if (!name) {
-				console.log('Missing name:', id, dex.modid);
-				continue;
-			}
-
-			generateAlias(id, name, 'ability', dex);
-		}
-
-		index = index.concat(Object.keys(dex.data.Pokedex).map(x => x + ' pokemon'));
-		index = index.concat(Object.keys(dex.data.Moves).map(x => x + ' move'));
-		index = index.concat(Object.keys(dex.data.Items).map(x => x + ' item'));
-		index = index.concat(Object.keys(dex.data.Abilities).map(x => x + ' ability'));
+	for (const id in Dex.data.Pokedex) {
+		const name = Dex.data.Pokedex[id].name;
+		if (Dex.data.Pokedex[id].isCosmeticForme) continue;
+		generateAlias(id, name, 'pokemon');
+	}
+	for (const id in Dex.data.Moves) {
+		const name = Dex.data.Moves[id].name;
+		generateAlias(id, name, 'move');
+	}
+	for (const id in Dex.data.Items) {
+		const name = Dex.data.Items[id].name;
+		generateAlias(id, name, 'item');
+	}
+	for (const id in Dex.data.Abilities) {
+		const name = Dex.data.Abilities[id].name;
+		generateAlias(id, name, 'ability');
 	}
 
 	// hardcode ultra beasts
@@ -317,9 +267,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		7.1,
 		5.1,
 		3.1, 3.11,
-
-		// mods
-		9.11,
 	];
 
 	// process.stdout.write("\n  ");
@@ -344,9 +291,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isBW1 = genIdent === 5.1;
 		const isRS = genIdent === 3.1;
 		const isFRLG = genIdent === 3.11;
-		
-		const isHellsKitchen = genIdent === 9.11;
-		
 		const gen = (() => {
 			let genStr = 'gen' + genNum;
 			if (isSSDLC1) genStr += 'dlc1';
@@ -360,7 +304,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (isRS) genStr += 'rs';
 			if (isFRLG) genStr += 'frlg';
 			if (isChampions || isNDChampions) genStr = 'champions';
-			if (isHellsKitchen) genStr += 'hellskitchen';
 			return genStr;
 		})();
 		// process.stdout.write("" + gen + (isDoubles ? " doubles" : "") + "... ");
@@ -468,7 +411,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				if (isDoubles && genNum > 4) {
 					return species.doublesTier;
 				}
-				if (isNatDex || (isPreDLC && genNum === 9.41) || (isSVDLC1 && genNum === 9.411) || isHellsKitchen) {
+				if (isNatDex || (isPreDLC && genNum === 9.41) || (isSVDLC1 && genNum === 9.411)) {
 					return species.natDexTier;
 				}
 				if (isNDChampions) {
@@ -503,8 +446,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 					'aaa', 'bh', 'doubles', // natdex abbreviations
 					'tiershift', 'linked', 'pokebilitiesaaa',
 				])) {
-					const format = Dex.formats.get(`${gen}${isNatDex ? 'nationaldex' : isChampions ? 'champions' : 
-															isHellsKitchen ? 'hellskitchen' : ''}${meta}`);
+					const format = Dex.formats.get(`${gen}${isNatDex ? 'nationaldex' : isChampions ? 'champions' : ''}${meta}`);
 					if (!format.exists) continue;
 					const ruleTable = Dex.formats.getRuleTable(format);
 					let banned = ruleTable.isBannedSpecies(species);
@@ -607,14 +549,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			BattleTeambuilderTable['natdexchampions'].metagameBans = metagameBans;
 			BattleTeambuilderTable['natdexchampions'].overrideTier = overrideTier;
 			BattleTeambuilderTable['natdexchampions'].formatSlices = formatSlices;
-		} else if (isHellsKitchen) {
-			BattleTeambuilderTable['hellskitchen'] = {};
-			BattleTeambuilderTable['hellskitchen'].learnsets = {};
-			BattleTeambuilderTable['hellskitchen'].tiers = tiers;
-			BattleTeambuilderTable['hellskitchen'].items = items;
-			BattleTeambuilderTable['hellskitchen'].metagameBans = metagameBans;
-			BattleTeambuilderTable['hellskitchen'].overrideTier = overrideTier;
-			BattleTeambuilderTable['hellskitchen'].formatSlices = formatSlices;
 		} else if (isVGC) {
 			BattleTeambuilderTable[gen + 'vgc'] = {};
 			BattleTeambuilderTable[gen + 'vgc'].tiers = tiers;
@@ -678,13 +612,13 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				return ["DUber", "(DUber)", "DOU", "DBL", "(DOU)", "DUU", "(DUU)", "New", "NFE", "LC"];
 			}
 			return [
-				"CAP", "CAP NFE", "CAP LC", "AG", "(AG)", "Uber", "OU", "(OU)", "UUBL", "UU", "RUBL", "RU", "NUBL", "NU", "PUBL", "PU", "ZUBL", "ZU", 'SUBL', 'SU', "New", "NFE", "LC", "Unreleased",
+				"CAP", "CAP NFE", "CAP LC", "AG", "(AG)", "Uber", "OU", "(OU)", "UUBL", "UU", "RUBL", "RU", "NUBL", "NU", "PUBL", "PU", "ZUBL", "ZU", "New", "NFE", "LC", "Unreleased",
 			];
 		})();
 
 		for (const tier of tierOrder) {
 			if (tier in {
-				OU: 1, UUBL: 1, AG: 1, Uber: 1, UU: 1, RU: 1, NU: 1, PU: 1, ZU: 1, SU: 1, NFE: 1, LC: 1, DOU: 1, DUU: 1,
+				OU: 1, UUBL: 1, AG: 1, Uber: 1, UU: 1, RU: 1, NU: 1, PU: 1, ZU: 1, NFE: 1, LC: 1, DOU: 1, DUU: 1,
 				"(DUU)": 1, New: 1, Legal: 1, Regular: 1, Restricted: 1, "CAP LC": 1,
 			}) {
 				let usedTier = tier;
@@ -728,7 +662,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				continue;
 			}
 			if (item.isNonstandard && !isMetBattle) {
-				if (isNatDex || isNDChampions || isHellsKitchen) {
+				if (isNatDex || isNDChampions) {
 					let curItem = item;
 					let curGen = genNum;
 					while (curItem.isNonstandard && curGen >= 7) {
@@ -1130,24 +1064,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			}
 		}
 	}
-
-	const HellsKitchenLearnsets = Dex.mod('hellskitchen').data.Learnsets;
-	for (const id in HellsKitchenLearnsets) {
-		const species = Dex.mod('hellskitchen').species.get(id);
-		if (species.isNonstandard && species.isNonstandard !== 'Past') continue;
-		const learnset = HellsKitchenLearnsets[id].learnset;
-		if (!learnset) continue;
-		BattleTeambuilderTable['hellskitchen'].learnsets[id] = {};
-		for (const moveid in learnset) {
-			if (moveid in BattleTeambuilderTable['hellskitchen'].learnsets[id]) {
-				if (BattleTeambuilderTable['hellskitchen'].learnsets[id][moveid].includes('9')) continue;
-				BattleTeambuilderTable['hellskitchen'].learnsets[id][moveid] += '9a';
-			} else {
-				BattleTeambuilderTable['hellskitchen'].learnsets[id][moveid] = '9a';
-			}
-		}
-	}
-
 	const SSDLC1Learnsets = Dex.mod('gen8dlc1').data.Learnsets;
 	for (const id in SSDLC1Learnsets) {
 		const learnset = SSDLC1Learnsets[id].learnset;
@@ -1383,7 +1299,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 
 	for (const mod of [
 		'gen3rs', 'gen3frlg', 'gen5bw1', 'gen7letsgo', 'gen8bdsp', 'gen9ssb', 'champions',
-		'hellskitchen',
 	]) {
 		const modDex = Dex.mod(mod);
 		const modData = modDex.data;
@@ -1457,13 +1372,9 @@ console.log("DONE");
 process.stdout.write("Building `data/pokedex.js`... ");
 
 {
-	const BasePokedex = requireNoCache('../caches/pokemon-showdown/dist/data/pokedex.js').Pokedex;
-	const Pokedex = { ...BasePokedex };
-	const hellsKitchenDex = Dex.mod('hellskitchen');
-	for (const id in hellsKitchenDex.data.Pokedex) {
-		Pokedex[id] = { ...hellsKitchenDex.data.Pokedex[id] };
+	const Pokedex = requireNoCache('../caches/pokemon-showdown/dist/data/pokedex.js').Pokedex;
+	for (const id in Pokedex) {
 		const entry = Pokedex[id];
-		const species = hellsKitchenDex.species.get(id);
 		if (Dex.data.FormatsData[id]) {
 			// console.log('formatsentry:' + id);
 			const formatsEntry = Dex.data.FormatsData[id];

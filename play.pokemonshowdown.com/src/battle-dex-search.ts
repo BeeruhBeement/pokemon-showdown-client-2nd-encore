@@ -649,9 +649,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'svdlc1' | 'svdlc1doubles' | 'stadium' | 'lc' |
-		'champions' | 'natdexchampions' |
-		'hellskitchen' | 
-		null = null;
+		'champions' | 'natdexchampions' | null = null;
 	isDoubles = false;
 
 	/**
@@ -791,13 +789,6 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			format = format.slice(0, -5) as ID;
 			if (!format) format = 'anythinggoes' as ID;
 		}
-		
-		if (format.includes('hellskitchen')) {
-			this.formatType = 'hellskitchen';
-			this.dex = Dex.mod('hellskitchen' as ID);
-			format = format.slice(12) as ID;
-		}
-		
 		this.format = format;
 
 		this.species = '' as ID;
@@ -896,9 +887,6 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (this.formatType === 'frlg') table = table['gen3frlg'];
 		if (this.formatType === 'champions') table = table['champions'];
 		if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
-		
-		if (this.formatType === 'hellskitchen') table = table['hellskitchen'];
-
 		if (speciesid in table.learnsets) return speciesid;
 		const species = this.dex.species.get(speciesid);
 		if (!species.exists) return '' as ID;
@@ -971,9 +959,6 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'frlg') table = table['gen3frlg'];
 			if (this.formatType === 'champions') table = table['champions'];
 			if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
-			
-			if (this.formatType === 'hellskitchen') table = table['hellskitchen'];
-
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
 			if (learnset && (moveid in learnset) && (!this.format.startsWith('tradebacks') ? learnset[moveid].includes(genChar) :
@@ -1011,9 +996,6 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'stadium' ? `gen${gen}stadium${gen > 1 ? gen : ''}` :
 			this.formatType === 'champions' ? `champions` :
 			this.formatType === 'natdexchampions' ? `natdexchampions` :
-
-			this.formatType === 'hellskitchen' ? `hellskitchen` :
-
 			`gen${gen}`;
 		if (table?.[tableKey]) {
 			table = table[tableKey];
@@ -1060,9 +1042,6 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		let results: SearchRow[] = [];
 		for (let id in BattlePokedex) {
 			switch (id) {
-			case 'venusaurmegag':
-				results.push(['header', "New"]);
-				break;
 			case 'bulbasaur':
 				results.push(['header', "Generation 1"]);
 				break;
@@ -1119,8 +1098,6 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			table = table[`champions`];
 		} else if (this.formatType === 'natdexchampions') {
 			table = table[`natdexchampions`];
-		} else if (this.formatType === 'hellskitchen') {
-			table = table[`hellskitchen`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
 		} else if (dex.gen === 9 && isHackmons && !this.formatType) {
@@ -1232,7 +1209,6 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		else if (format === 'nu') tierSet = tierSet.slice(slices.NU);
 		else if (format === 'pu') tierSet = tierSet.slice(slices.PU);
 		else if (format === 'zu') tierSet = tierSet.slice(slices.ZU);
-		else if (format === 'su') tierSet = tierSet.slice(slices.SU);
 		else if (
 			format === 'lc' || format === 'lcuu' || format.startsWith('lc') || (format !== 'caplc' && format.endsWith('lc'))
 		) tierSet = tierSet.slice(slices.LC);
@@ -1503,8 +1479,6 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table[`champions`];
 		} else if (this.formatType === 'natdexchampions') {
 			table = table[`natdexchampions`];
-		} else if (this.formatType === 'hellskitchen') {
-			table = table[`hellskitchen`];
 		} else if (this.dex.gen < 9) {
 			table = table[`gen${this.dex.gen}`];
 		}
@@ -1894,9 +1868,6 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType === 'frlg') lsetTable = lsetTable['gen3frlg'];
 		if (this.formatType === 'champions') lsetTable = lsetTable['champions'];
 		if (this.formatType === 'natdexchampions') lsetTable = lsetTable['natdexchampions'];
-		
-		if (this.formatType === 'hellskitchen') lsetTable = lsetTable['hellskitchen'];
-
 		if (this.formatType?.startsWith('ssdlc1')) lsetTable = lsetTable['gen8dlc1'];
 		if (this.formatType?.startsWith('predlc')) lsetTable = lsetTable['gen9predlc'];
 		if (this.formatType?.startsWith('svdlc1')) lsetTable = lsetTable['gen9dlc1'];
@@ -1922,7 +1893,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen")) && move.isNonstandard === "Past") {
+					if (!this.formatType?.includes('natdex') && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (
@@ -1964,13 +1935,13 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				if (sketch) {
 					if (move.flags['nosketch'] || move.isMax || move.isZ) continue;
 					if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen') continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
 					sketchMoves.push(move.id);
 				} else {
-					if (!(dex.gen < 8 || this.formatType === 'natdex' || this.formatType === 'hellskitchen') && move.isZ) continue;
+					if (!(dex.gen < 8 || this.formatType === 'natdex') && move.isZ) continue;
 					if (typeof move.isMax === 'string') continue;
 					if (move.isMax && dex.gen > 8) continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen') continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex') continue;
 					if (move.isNonstandard === 'LGPE' && this.formatType !== 'letsgo') continue;
 					moves.push(move.id);
 				}
