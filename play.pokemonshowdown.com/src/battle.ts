@@ -3522,6 +3522,11 @@ export class Battle {
 			if (this.tier.includes(`Champions`)) {
 				this.dex = Dex.mod('champions' as ID);
 			}
+
+			if (this.tier.includes(`Hells Kitchen`)) {
+				this.dex = Dex.mod('hellskitchen' as ID);
+			}
+
 			this.log(args);
 			break;
 		}
