@@ -698,6 +698,15 @@ export const Dex = new class implements ModdedDex {
 			spriteData.cryurl = `sprites/${options.mod}/audio/${toID(species.baseSpecies)}`;
 			spriteData.cryurl += '.mp3';
 		}
+		
+		for (let mod of ["gen9hellskitchen"]) {
+			if (species.isNonstandard === "Modded") {
+				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + toID(species.name) + '.png';
+				spriteData.pixelated = true;
+				spriteData.gen = 5;
+				return spriteData;
+			}
+		}
 
 		let animatedSprite = false;
 		if (!Dex.prefs('noanim') && !Dex.prefs('nogif') && spriteData.gen >= 5) {
@@ -903,6 +912,14 @@ export const Dex = new class implements ModdedDex {
 		const data = this.getTeambuilderSpriteData(pokemon, dex);
 		const shiny = (data.shiny ? '-shiny' : '');
 		const resize = (data.h ? `background-size:${data.h}px` : '');
+		
+		for (let mod of ["gen9hellskitchen"]) {
+			if (Dex.species.get(pokemon.species).isNonstandard === "Modded") {
+				let url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + 'front' + shiny + '/' + data.spriteid + '.png';
+				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
+			}
+		}
+
 		return `background-image:url(${Dex.resourcePrefix}${data.spriteDir}${shiny}/${data.spriteid}.png);background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
 	}
 
