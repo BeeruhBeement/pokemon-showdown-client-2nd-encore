@@ -3524,7 +3524,13 @@ export class Battle {
 			}
 
 			if (this.tier.includes(`Hells Kitchen`)) {
-				this.dex = Dex.mod('hellskitchen' as ID);
+				this.dex = Dex.mod('gen9hellskitchen' as ID);
+			}
+			if (this.tier.includes(`Puffy Pink`)) {
+				this.dex = Dex.mod('gen3puffypink' as ID);
+			}
+			if (this.tier.includes(`Altermons`)) {
+				this.dex = Dex.mod('gen9altermons' as ID);
 			}
 
 			this.log(args);

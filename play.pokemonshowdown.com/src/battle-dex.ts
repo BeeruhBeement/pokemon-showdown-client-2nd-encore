@@ -286,7 +286,13 @@ export const Dex = new class implements ModdedDex {
 			dex = Dex.mod('champions' as ID);
 		}
 		if (dex.gen === 9 && formatid.includes('hellskitchen')) {
-			dex = Dex.mod('hellskitchen' as ID);
+			dex = Dex.mod('gen9hellskitchen' as ID);
+		}
+		if (dex.gen === 3 && formatid.includes('puffypink')) {
+			dex = Dex.mod('gen3puffypink' as ID);
+		}
+		if (dex.gen === 9 && formatid.includes('altermons')) {
+			dex = Dex.mod('gen9altermons' as ID);
 		}
 		return dex;
 	}
@@ -699,7 +705,7 @@ export const Dex = new class implements ModdedDex {
 			spriteData.cryurl += '.mp3';
 		}
 		
-		for (let mod of ["gen9hellskitchen"]) {
+		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons"]) {
 			if (species.isNonstandard === "Modded") {
 				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + toID(species.name) + '.png';
 				spriteData.pixelated = true;
@@ -913,7 +919,7 @@ export const Dex = new class implements ModdedDex {
 		const shiny = (data.shiny ? '-shiny' : '');
 		const resize = (data.h ? `background-size:${data.h}px` : '');
 		
-		for (let mod of ["gen9hellskitchen"]) {
+		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons"]) {
 			if (Dex.species.get(pokemon.species).isNonstandard === "Modded") {
 				let url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + 'front' + shiny + '/' + data.spriteid + '.png';
 				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
@@ -982,8 +988,9 @@ export class ModdedDex {
 	constructor(modid: ID) {
 		this.modid = modid;
 		let gen = parseInt(modid.charAt(3), 10);
-		if (this.modid === 'champions' || this.modid === 'hellskitchen') gen = 9;
-		if ((modid !== 'champions' && modid !== 'hellskitchen' && !modid.startsWith('gen')) || !gen) throw new Error("Unsupported modid");
+		if (this.modid === 'champions' || this.modid === 'hellskitchen' || this.modid === 'altermons') gen = 9;
+		if (this.modid === 'puffypink') gen = 3;
+		if ((modid !== 'champions' && modid !== 'hellskitchen' && modid !== 'puffypink' && modid !== 'altermons' && !modid.startsWith('gen')) || !gen) throw new Error("Unsupported modid");
 		this.gen = gen;
 	}
 	moves = {

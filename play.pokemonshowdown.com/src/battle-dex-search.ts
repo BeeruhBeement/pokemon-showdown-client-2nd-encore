@@ -650,7 +650,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'svdlc1' | 'svdlc1doubles' | 'stadium' | 'lc' |
 		'champions' | 'natdexchampions' |
-		'hellskitchen' | 
+		'hellskitchen' | 'puffypink' | 'altermons' |
 		null = null;
 	isDoubles = false;
 
@@ -794,8 +794,18 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		
 		if (format.includes('hellskitchen')) {
 			this.formatType = 'hellskitchen';
-			this.dex = Dex.mod('hellskitchen' as ID);
+			this.dex = Dex.mod('gen9hellskitchen' as ID);
 			format = format.slice(12) as ID;
+		}
+		if (format.includes('puffypink')) {
+			this.formatType = 'puffypink';
+			this.dex = Dex.mod('gen3puffypink' as ID);
+			format = format.slice(9) as ID;
+		}
+		if (format.includes('altermons')) {
+			this.formatType = 'altermons';
+			this.dex = Dex.mod('gen9altermons' as ID);
+			format = format.slice(9) as ID;
 		}
 		
 		this.format = format;
@@ -897,7 +907,9 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (this.formatType === 'champions') table = table['champions'];
 		if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
 		
-		if (this.formatType === 'hellskitchen') table = table['hellskitchen'];
+		if (this.formatType === 'hellskitchen') table = table['gen9hellskitchen'];
+		if (this.formatType === 'puffypink') table = table['gen3puffypink'];
+		if (this.formatType === 'altermons') table = table['gen9altermons'];
 
 		if (speciesid in table.learnsets) return speciesid;
 		const species = this.dex.species.get(speciesid);
@@ -972,7 +984,9 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'champions') table = table['champions'];
 			if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
 			
-			if (this.formatType === 'hellskitchen') table = table['hellskitchen'];
+			if (this.formatType === 'hellskitchen') table = table['gen9hellskitchen'];
+			if (this.formatType === 'puffypink') table = table['gen3puffypink'];
+			if (this.formatType === 'altermons') table = table['gen9altermons'];
 
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
@@ -1012,7 +1026,9 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'champions' ? `champions` :
 			this.formatType === 'natdexchampions' ? `natdexchampions` :
 
-			this.formatType === 'hellskitchen' ? `hellskitchen` :
+			this.formatType === 'hellskitchen' ? `gen9hellskitchen` :
+			this.formatType === 'puffypink' ? `gen3puffypink` :
+			this.formatType === 'altermons' ? `gen9altermons` :
 
 			`gen${gen}`;
 		if (table?.[tableKey]) {
@@ -1060,9 +1076,6 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		let results: SearchRow[] = [];
 		for (let id in BattlePokedex) {
 			switch (id) {
-			case 'venusaurmegag':
-				results.push(['header', "New"]);
-				break;
 			case 'bulbasaur':
 				results.push(['header', "Generation 1"]);
 				break;
@@ -1120,7 +1133,11 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		} else if (this.formatType === 'natdexchampions') {
 			table = table[`natdexchampions`];
 		} else if (this.formatType === 'hellskitchen') {
-			table = table[`hellskitchen`];
+			table = table[`gen9hellskitchen`];
+		} else if (this.formatType === 'puffypink') {
+			table = table[`gen3puffypink`];
+		} else if (this.formatType === 'altermons') {
+			table = table[`gen9altermons`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
 		} else if (dex.gen === 9 && isHackmons && !this.formatType) {
@@ -1504,7 +1521,11 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 		} else if (this.formatType === 'natdexchampions') {
 			table = table[`natdexchampions`];
 		} else if (this.formatType === 'hellskitchen') {
-			table = table[`hellskitchen`];
+			table = table[`gen9hellskitchen`];
+		} else if (this.formatType === 'puffypink') {
+			table = table[`gen3puffypink`];
+		} else if (this.formatType === 'altermons') {
+			table = table[`gen9altermons`];
 		} else if (this.dex.gen < 9) {
 			table = table[`gen${this.dex.gen}`];
 		}
@@ -1895,7 +1916,9 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType === 'champions') lsetTable = lsetTable['champions'];
 		if (this.formatType === 'natdexchampions') lsetTable = lsetTable['natdexchampions'];
 		
-		if (this.formatType === 'hellskitchen') lsetTable = lsetTable['hellskitchen'];
+		if (this.formatType === 'hellskitchen') lsetTable = lsetTable['gen9hellskitchen'];
+		if (this.formatType === 'puffypink') lsetTable = lsetTable['gen3puffypink'];
+		if (this.formatType === 'altermons') lsetTable = lsetTable['gen9altermons'];
 
 		if (this.formatType?.startsWith('ssdlc1')) lsetTable = lsetTable['gen8dlc1'];
 		if (this.formatType?.startsWith('predlc')) lsetTable = lsetTable['gen9predlc'];
@@ -1922,7 +1945,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen")) && move.isNonstandard === "Past") {
+					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen") && !this.formatType?.includes("altermons")) && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (
@@ -1964,13 +1987,13 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				if (sketch) {
 					if (move.flags['nosketch'] || move.isMax || move.isZ) continue;
 					if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen') continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen' && this.formatType !== 'altermons') continue;
 					sketchMoves.push(move.id);
 				} else {
-					if (!(dex.gen < 8 || this.formatType === 'natdex' || this.formatType === 'hellskitchen') && move.isZ) continue;
+					if (!(dex.gen < 8 || this.formatType === 'natdex' || this.formatType === 'hellskitchen' || this.formatType === 'altermons') && move.isZ) continue;
 					if (typeof move.isMax === 'string') continue;
 					if (move.isMax && dex.gen > 8) continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen') continue;
+					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen' && this.formatType !== 'altermons') continue;
 					if (move.isNonstandard === 'LGPE' && this.formatType !== 'letsgo') continue;
 					moves.push(move.id);
 				}
