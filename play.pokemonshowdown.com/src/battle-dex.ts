@@ -707,7 +707,8 @@ export const Dex = new class implements ModdedDex {
 		
 		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons"]) {
 			if (species.isNonstandard === "Modded") {
-				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + toID(species.name) + '.png';
+				const data = this.getTeambuilderSpriteData(pokemon);
+				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
 				spriteData.pixelated = true;
 				spriteData.gen = 5;
 				return spriteData;

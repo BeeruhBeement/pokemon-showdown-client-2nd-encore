@@ -1259,6 +1259,9 @@ export interface MoveFlags {
 	sound?: 1 | 0;
 	/** Activates the effects of the Wind Power and Wind Rider Abilities. */
 	wind?: 1 | 0;
+	
+	/** Power is multiplied by 1.2 when used by a Pokemon with the Striker Ability. */
+	kicking?: 1 | 0;
 }
 
 export type MoveTarget = 'normal' | 'any' | 'adjacentAlly' | 'adjacentFoe' | 'adjacentAllyOrSelf' | // single-target
@@ -1306,7 +1309,9 @@ export class Move implements Effect {
 	readonly noPPBoosts: boolean;
 	readonly status: string;
 	readonly secondaries: readonly any[] | null;
+	readonly selfSwitch: any | null;
 	readonly num: number;
+
 
 	constructor(id: ID, name: string, data: any) {
 		if (!data || typeof data !== 'object') data = {};
@@ -1343,6 +1348,8 @@ export class Move implements Effect {
 		this.noPPBoosts = data.noPPBoosts || false;
 		this.status = data.status || '';
 		this.secondaries = data.secondaries || (data.secondary ? [data.secondary] : null);
+
+		this.selfSwitch = data.selfSwitch || null;
 
 		this.isMax = data.isMax || false;
 		this.maxMove = data.maxMove || { basePower: 0 };
