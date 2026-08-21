@@ -18,7 +18,8 @@
  * @license MIT
  */
 
-import { Pokemon, type ServerPokemon } from "./battle";
+import { format } from "d3";
+import { Battle, Pokemon, type ServerPokemon } from "./battle";
 import {
 	BattleAvatarNumbers, BattleBaseSpeciesChart, BattlePokemonIconIndexes, BattlePokemonIconIndexesLeft,
 	Ability, Item, Move, Species, PureEffect, type ID, type Type,
@@ -293,6 +294,15 @@ export const Dex = new class implements ModdedDex {
 		}
 		if (dex.gen === 9 && formatid.includes('altermons')) {
 			dex = Dex.mod('gen9altermons' as ID);
+		}
+		if (dex.gen === 9 && formatid.includes('ironfist')) {
+			dex = Dex.mod('gen9ironfist' as ID);
+		}
+		if (dex.gen === 9 && formatid.includes('typeshift')) {
+			dex = Dex.mod('gen9typeshift' as ID);
+		}
+		if (dex.gen === 9 && formatid.includes('ptest')) {
+			dex = Dex.mod('gen9ptest' as ID);
 		}
 		return dex;
 	}
@@ -704,9 +714,9 @@ export const Dex = new class implements ModdedDex {
 			spriteData.cryurl = `sprites/${options.mod}/audio/${toID(species.baseSpecies)}`;
 			spriteData.cryurl += '.mp3';
 		}
-		
-		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons"]) {
-			if (species.isNonstandard === "Modded") {
+
+		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
+			if (format.name.includes(mod) && Dex.mod(toID(mod)).species.get(species.toString()).isNonstandard === "Modded") {
 				const data = this.getTeambuilderSpriteData(pokemon);
 				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
 				spriteData.pixelated = true;
@@ -920,8 +930,8 @@ export const Dex = new class implements ModdedDex {
 		const shiny = (data.shiny ? '-shiny' : '');
 		const resize = (data.h ? `background-size:${data.h}px` : '');
 		
-		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons"]) {
-			if (Dex.species.get(pokemon.species).isNonstandard === "Modded") {
+		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
+			if (Dex.mod(toID(mod)).species.get(pokemon.species).isNonstandard === "Modded") {
 				let url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + 'front' + shiny + '/' + data.spriteid + '.png';
 				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
 			}
@@ -989,9 +999,8 @@ export class ModdedDex {
 	constructor(modid: ID) {
 		this.modid = modid;
 		let gen = parseInt(modid.charAt(3), 10);
-		if (this.modid === 'champions' || this.modid === 'hellskitchen' || this.modid === 'altermons') gen = 9;
-		if (this.modid === 'puffypink') gen = 3;
-		if ((modid !== 'champions' && modid !== 'hellskitchen' && modid !== 'puffypink' && modid !== 'altermons' && !modid.startsWith('gen')) || !gen) throw new Error("Unsupported modid");
+		if (this.modid === 'champions') gen = 9;
+		if ((modid !== 'champions' && !modid.startsWith('gen')) || !gen) throw new Error("Unsupported modid");
 		this.gen = gen;
 	}
 	moves = {
@@ -1167,6 +1176,16 @@ export class ModdedDex {
 					data.exists = false;
 					// don't bother correcting its attributes given it doesn't exist
 					break;
+				}
+				if (id in table.overrideTypeChart) {
+					data = { ...data, ...table.overrideTypeChart[id] };
+				}
+			}
+
+			for (let mod of ["gen9ironfist"]) {
+				const table = window.BattleTeambuilderTable[mod];
+				if (id in table.removeType) {
+					data.exists = false;
 				}
 				if (id in table.overrideTypeChart) {
 					data = { ...data, ...table.overrideTypeChart[id] };

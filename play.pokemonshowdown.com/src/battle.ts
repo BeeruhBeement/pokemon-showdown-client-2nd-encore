@@ -3532,6 +3532,15 @@ export class Battle {
 			if (this.tier.includes(`Altermons`)) {
 				this.dex = Dex.mod('gen9altermons' as ID);
 			}
+			if (this.tier.includes(`Iron Fist`)) {
+				this.dex = Dex.mod('gen9ironfist' as ID);
+			}
+			if (this.tier.includes(`Type Shift`)) {
+				this.dex = Dex.mod('gen9typeshift' as ID);
+			}
+			if (this.tier.includes(`PTest`)) {
+				this.dex = Dex.mod('gen9ptest' as ID);
+			}
 
 			this.log(args);
 			break;

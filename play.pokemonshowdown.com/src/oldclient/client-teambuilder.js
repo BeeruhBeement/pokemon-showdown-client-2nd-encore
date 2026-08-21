@@ -2894,7 +2894,7 @@
 			var isChampions = this.curTeam.format.includes('champions');
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
-			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex') || this.curTeam.format.includes('hellskitchen') || this.curTeam.format.includes('altermons');
+			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex') || this.curTeam.format.includes('hellskitchen') || this.curTeam.format.includes('altermons') || this.curTeam.format.includes('ironfist');
 			var isHackmons = this.curTeam.format.includes('hackmons') || this.curTeam.format.endsWith('bh');
 
 			var species = this.curTeam.dex.species.get(set.species);
