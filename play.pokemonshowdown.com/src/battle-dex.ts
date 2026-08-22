@@ -844,6 +844,10 @@ export const Dex = new class implements ModdedDex {
 		let left = (num % 12) * 40;
 		let fainted = ((pokemon as Pokemon | ServerPokemon)?.fainted ?
 			`;opacity:.3;filter:grayscale(100%) brightness(.5)` : ``);
+		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
+				if (Dex.species.get(id).isNonstandard === "Modded") {return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${toID(mod)}/sprites/icons/${id}.png') no-repeat scroll ${fainted}`;
+			}
+		}
 		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v22) no-repeat scroll -${left}px -${top}px${fainted}`;
 	}
 
@@ -887,6 +891,12 @@ export const Dex = new class implements ModdedDex {
 		].includes(species.id) && !(species.isMega && species.gen === 9);
 		if (gen >= 8 && homeExists) {
 			spriteData.spriteDir = 'sprites/home-centered';
+			spriteData.x = 8;
+			spriteData.y = 10;
+			spriteData.h = 96;
+			return spriteData;
+		}
+		if (dex.modid === "gen9hellskitchen") {
 			spriteData.x = 8;
 			spriteData.y = 10;
 			spriteData.h = 96;
