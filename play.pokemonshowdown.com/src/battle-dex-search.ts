@@ -1135,6 +1135,18 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 				break;
 			case 'pikachucosplay':
 				continue;
+			case 'venusaurmegag':
+				results.push(['header', "Hells Kitchen"]);
+				break;
+			case 'whispyjr':
+				results.push(['header', "Puffy Pink"]);
+				break;
+			case 'anarlvet':
+				results.push(['header', "Iron Fist"]);
+				break;
+			case 'c3ll':
+				results.push(['header', "PTest"]);
+				break;
 			}
 			results.push(['pokemon', id as ID]);
 		}
