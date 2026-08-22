@@ -18,8 +18,7 @@
  * @license MIT
  */
 
-import { format } from "d3";
-import { Battle, Pokemon, type ServerPokemon } from "./battle";
+import { Pokemon, type ServerPokemon } from "./battle";
 import {
 	BattleAvatarNumbers, BattleBaseSpeciesChart, BattlePokemonIconIndexes, BattlePokemonIconIndexesLeft,
 	Ability, Item, Move, Species, PureEffect, type ID, type Type,
@@ -716,7 +715,7 @@ export const Dex = new class implements ModdedDex {
 		}
 
 		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
-			if (format.name.includes(mod) && Dex.mod(toID(mod)).species.get(species.toString()).isNonstandard === "Modded") {
+			if (Dex.mod(toID(mod)).species.get(species.id.toString()).isNonstandard === "Modded") {
 				const data = this.getTeambuilderSpriteData(pokemon);
 				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
 				spriteData.pixelated = true;
@@ -1176,16 +1175,6 @@ export class ModdedDex {
 					data.exists = false;
 					// don't bother correcting its attributes given it doesn't exist
 					break;
-				}
-				if (id in table.overrideTypeChart) {
-					data = { ...data, ...table.overrideTypeChart[id] };
-				}
-			}
-
-			for (let mod of ["gen9ironfist"]) {
-				const table = window.BattleTeambuilderTable[mod];
-				if (id in table.removeType) {
-					data.exists = false;
 				}
 				if (id in table.overrideTypeChart) {
 					data = { ...data, ...table.overrideTypeChart[id] };
