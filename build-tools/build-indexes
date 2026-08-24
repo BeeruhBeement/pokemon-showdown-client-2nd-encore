@@ -786,7 +786,13 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (formatSlices['DUU'] === undefined) formatSlices['DUU'] = formatSlices['New'];
 		}
 
-		const itemList = Object.keys(Dex.data.Items);
+		const itemSet = new Set(Object.keys(Dex.data.Items));
+
+		for (const id of Object.keys(modDex.data.Items)) {
+			itemSet.add(id);
+		}
+
+		const itemList = [...itemSet];
 		itemList.sort();
 
 		const greatItems = [['header', "Popular items"]];
