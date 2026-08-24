@@ -939,10 +939,12 @@ export const Dex = new class implements ModdedDex {
 		const shiny = (data.shiny ? '-shiny' : '');
 		const resize = (data.h ? `background-size:${data.h}px` : '');
 		
-		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
+		const mod = dex?.modid;
+
+		if (mod && ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"].includes(mod)) {
 			if (Dex.mod(toID(mod)).species.get(pokemon.species).isNonstandard === "Modded") {
-				let url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + 'front' + shiny + '/' + data.spriteid + '.png';
-				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
+				const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + mod + '/sprites/front' + shiny + '/' + data.spriteid + '.png';
+				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;	
 			}
 		}
 
