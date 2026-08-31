@@ -1265,6 +1265,9 @@
 					var desc = formatInfo.resources.length ? 'more ' : '';
 					buf += '<div style="padding-left: 5px">Find ' + desc + 'helpful resources for this tier on <a href="' + formatInfo.url + '" target="_blank">the Smogon Dex</a>.</div>';
 				}
+
+				buf += this.renderDefensiveCoverage();
+
 				buf += '<form id="pokepasteForm" style="display:inline" method="post" action="https://pokepast.es/create" target="_blank">';
 				buf += '<input type="hidden" name="title" id="pasteTitle">';
 				buf += '<input type="hidden" name="paste" id="pasteData">';
@@ -1425,6 +1428,133 @@
 
 			buf += '</div></li>';
 			return buf;
+		},
+		
+		getActiveDex: function () {
+			if (this.curTeam && this.curTeam.format) {
+				return Dex.forFormat(this.curTeam.format);
+			}
+			return Dex;
+		},
+		getTypeWeakness: function (type, attackType) {
+			var dex = this.getActiveDex();
+			var typeData = dex.types.get(type);
+
+			var weaknessType = typeData.damageTaken && typeData.damageTaken[attackType];
+			if (weaknessType === Dex.IMMUNE) return 0;
+			if (weaknessType === Dex.RESIST) return 0.5;
+			if (weaknessType === Dex.WEAK) return 2;
+			return 1;
+		},
+		getWeakness: function (types, abilityid, attackType) {
+			const abilityFactor = BattleTooltips.getTypeAbilityWeakness(attackType, abilityid, this.dex);
+			if (abilityFactor === 0) return 0;
+
+			if (abilityid === 'wonderguard') {
+				for (const type of types) {
+					if (this.getTypeWeakness(type, attackType) <= 1) return 0;
+				}
+			}
+
+			let factor = abilityFactor;
+			for (const type of types) {
+				factor *= this.getTypeWeakness(type, attackType);
+			}
+			return factor;
+		},
+		pokemonDefensiveCoverage: function (set) {
+			var dex = Dex.forFormat('gen9ironfist');
+			var coverage = {};
+
+			if (!set || !set.species) return coverage;
+
+			var species = dex.species.get(set.species);
+
+			if (!species || !species.types) return coverage;
+
+			var abilityid = toID(set.ability || '');
+			var types = dex.types.names();
+
+			for (var i = 0; i < types.length; i++) {
+				var attackType = types[i];
+				coverage[attackType] = this.getWeakness(species.types, abilityid, attackType);
+			}
+			return coverage;
+		},
+		teamDefensiveCoverage: function () {
+			var dex = (this.curTeam && this.curTeam.dex) || dex;
+			var counters = {};
+			var types = dex.types.names();
+			for (var i = 0; i < types.length; i++) {
+				var type = types[i];
+				counters[type] = {
+					type: type,
+					resists: 0,
+					neutrals: 0,
+					weaknesses: 0
+				};
+			}
+			var sets = this.curSetList || [];
+			for (var j = 0; j < sets.length; j++) {
+				var set = sets[j];
+				if (!set || !set.species) continue;
+				var coverage = this.pokemonDefensiveCoverage(set);
+				for (var type in coverage) {
+					if (!counters[type]) {
+						counters[type] = {
+							type: type,
+							resists: 0,
+							neutrals: 0,
+							weaknesses: 0
+						};
+					}
+					var value = coverage[type];
+					if (value < 1) {
+						counters[type].resists++;
+					} else if (value === 1) {
+						counters[type].neutrals++;
+					} else {
+						counters[type].weaknesses++;
+					}
+				}
+			}
+			return counters;
+		},
+		renderDefensiveCoverage: function () {
+			if (!this.curTeam) return '';
+			if (!this.curSetList || !this.curSetList.length) return '';
+			var coverage = this.teamDefensiveCoverage();
+			var counters = [];
+			for (var type in coverage) {
+				counters.push(coverage[type]);
+			}
+			PSUtils.sortBy(counters, function (counter) {
+				return [counter.resists, -counter.weaknesses];
+			});
+			var good = '', medium = '', bad = '';
+			var renderTypeDefensive = function (counter) {
+				return '<tr>' +
+					'<th>' + BattleLog.escapeHTML(counter.type) + '</th>' +
+					'<td>' + counter.resists + ' <small class="gray">resist</small></td>' +
+					'<td>' + counter.weaknesses + ' <small class="gray">weak</small></td>' +
+					'</tr>';
+			};
+			for (var i = 0; i < counters.length; i++) {
+				var counter = counters[i];
+				if (counter.resists > counter.weaknesses) {
+					good += renderTypeDefensive(counter);
+				} else if (counter.resists === counter.weaknesses) {
+					medium += renderTypeDefensive(counter);
+				} else {
+					bad += renderTypeDefensive(counter);
+				}
+			}
+			return '<details class="details">' +
+				'<summary><strong>Defensive coverage</strong></summary>' +
+				'<table class="table">' +
+				bad + medium + good +
+				'</table>' +
+				'</details>';
 		},
 
 		saveImport: function () {
