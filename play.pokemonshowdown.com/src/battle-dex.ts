@@ -587,6 +587,23 @@ export const Dex = new class implements ModdedDex {
 		el.src = path + 'data/pokedex-mini-bw.js' + qs;
 		document.getElementsByTagName('body')[0].appendChild(el);
 	}
+
+	getModdedSpriteMod(mod?: string | ModdedDex | null) {
+		const modid = toID(typeof mod === 'string' ? mod : mod?.modid || Dex.modid) as ID;
+		if (!modid || modid === 'gen9') return null;
+		return Dex.mod(modid).gen > 0 ? modid : null;
+	}
+
+	getModdedSpriteDataMod(id: string, species: 'species' | 'item', dex?: ModdedDex | string | null) {
+		const activeDex = dex || (window as any).app?.rooms?.teambuilder?.curTeam?.dex;
+		const modid = toID(typeof activeDex === 'string' ? activeDex : activeDex?.modid || '') as ID;
+		if (modid !== 'champions' && !/^gen\d+.+$/.test(modid)) return null;
+
+		const dexObj = typeof activeDex === 'string' ? Dex.mod(modid) : activeDex;
+		const data = species === 'species' ? (dexObj?.species.get(id) as any) : (dexObj?.items.get(id) as any);
+		return data?.isNonstandard === 'Modded' && (species !== 'item' || data.spritenum === -1) ? modid : null;
+	}
+
 	getSpriteData(pokemon: Pokemon | Species | string, isFront: boolean, options: {
 		gen?: number,
 		shiny?: boolean,
@@ -594,6 +611,7 @@ export const Dex = new class implements ModdedDex {
 		afd?: boolean,
 		noScale?: boolean,
 		mod?: string,
+		dex?: ModdedDex,
 		dynamax?: boolean,
 	} = { gen: 6 }) {
 		const mechanicsGen = options.gen || 6;
@@ -714,14 +732,13 @@ export const Dex = new class implements ModdedDex {
 			spriteData.cryurl += '.mp3';
 		}
 
-		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
-			if (Dex.mod(toID(mod)).species.get(species.id.toString()).isNonstandard === "Modded") {
-				const data = this.getTeambuilderSpriteData(pokemon);
-				spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + toID(mod) + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
-				spriteData.pixelated = true;
-				spriteData.gen = 5;
-				return spriteData;
-			}
+		const activeMod = this.getModdedSpriteDataMod(species.id.toString(), 'species', options.dex || options.mod);
+		if (activeMod) {
+			const data = this.getTeambuilderSpriteData(pokemon, Dex.mod(activeMod));
+			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + activeMod + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
+			spriteData.pixelated = true;
+			spriteData.gen = 5;
+			return spriteData;
 		}
 
 		let animatedSprite = false;
@@ -816,7 +833,7 @@ export const Dex = new class implements ModdedDex {
 		return num;
 	}
 
-	getPokemonIcon(pokemon: string | Pokemon | ServerPokemon | Dex.PokemonSet | null, facingLeft?: boolean) {
+	getPokemonIcon(pokemon: string | Pokemon | ServerPokemon | Dex.PokemonSet | null, facingLeft?: boolean, dex?: ModdedDex) {
 		if (pokemon === 'pokeball') {
 			return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-pokeball-sheet.png) no-repeat scroll -0px 4px`;
 		} else if (pokemon === 'pokeball-statused') {
@@ -844,9 +861,9 @@ export const Dex = new class implements ModdedDex {
 		let left = (num % 12) * 40;
 		let fainted = ((pokemon as Pokemon | ServerPokemon)?.fainted ?
 			`;opacity:.3;filter:grayscale(100%) brightness(.5)` : ``);
-		for (let mod of ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"]) {
-				if (Dex.species.get(id).isNonstandard === "Modded") {return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${toID(mod)}/sprites/icons/${id}.png') no-repeat scroll ${fainted}`;
-			}
+		const activeMod = this.getModdedSpriteDataMod(id, 'species', dex);
+		if (activeMod) {
+			return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${activeMod}/sprites/icons/${id}.png') no-repeat scroll ${fainted}`;
 		}
 		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v22) no-repeat scroll -${left}px -${top}px${fainted}`;
 	}
@@ -938,24 +955,43 @@ export const Dex = new class implements ModdedDex {
 		const data = this.getTeambuilderSpriteData(pokemon, dex);
 		const shiny = (data.shiny ? '-shiny' : '');
 		const resize = (data.h ? `background-size:${data.h}px` : '');
-		
-		const mod = dex?.modid;
+		const mod = this.getModdedSpriteDataMod(toID(pokemon.species || pokemon), 'species', dex);
 
-		if (mod && ["gen9hellskitchen", "gen3puffypink", "gen9altermons", "gen9ironfist", "gen9ptest"].includes(mod)) {
-			if (Dex.mod(toID(mod)).species.get(pokemon.species).isNonstandard === "Modded") {
-				const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + mod + '/sprites/front' + shiny + '/' + data.spriteid + '.png';
-				return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;	
-			}
+		if (mod) {
+			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + mod + '/sprites/front' + shiny + '/' + data.spriteid + '.png';
+			return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
 		}
 
 		return `background-image:url(${Dex.resourcePrefix}${data.spriteDir}${shiny}/${data.spriteid}.png);background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
 	}
 
-	getItemIcon(item: any) {
+	getItemIcon(item: any, dex?: ModdedDex | string | null) {
 		let num = 0;
-		if (typeof item === 'string' && window.BattleItems) item = window.BattleItems[toID(item)];
-		if (item?.spritenum) num = item.spritenum;
+		const itemId = toID(item?.id || item || '');
+		const app = (window as any).app;
+		const rooms = app?.rooms || {};
+		const teambuilder = app?.curRoom?.type === 'teambuilder' ? app.curRoom :
+			rooms.teambuilder || Object.values(rooms).find((room: any) => room?.type === 'teambuilder');
+		const activeDex = dex || teambuilder?.curTeam?.dex ||
+			(teambuilder?.curTeam?.format ? Dex.forFormat(teambuilder.curTeam.format) : null);
+		if (typeof item === 'string') {
+			item = typeof activeDex === 'string' ? Dex.mod(toID(activeDex) as ID).items.get(itemId) :
+				activeDex?.items.get(itemId) || window.BattleItems?.[itemId];
+		}
+		if (item?.spritenum !== undefined) num = Number(item.spritenum);
+		if (num === -1) {
+			const mod = this.getModdedSpriteDataMod(itemId, 'item', activeDex) ||
+				(typeof activeDex === 'string' ? toID(activeDex) : activeDex?.modid) ||
+				((window as any).app?.rooms?.teambuilder?.curTeam?.dex?.modid || null);
+			if (mod && mod !== 'gen9') {
+				return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${mod}/sprites/items/${itemId}.png') no-repeat scroll 0 0`;
+			}
+			if (itemId) {
+				return `background:transparent url(${Dex.resourcePrefix}sprites/items/${itemId}.png) no-repeat scroll 0 0`;
+			}
+		}
 
+		if (num < 0) num = 0;
 		let top = Math.floor(num / 16) * 24;
 		let left = (num % 16) * 24;
 		return `background:transparent url(${Dex.resourcePrefix}sprites/itemicons-sheet.png?v1) no-repeat scroll -${left}px -${top}px`;
@@ -1028,13 +1064,13 @@ export class ModdedDex {
 
 			for (let i = Dex.gen - 1; i >= this.gen; i--) {
 				const table = window.BattleTeambuilderTable[`gen${i}`];
-				if (id in table.overrideMoveData) {
+				if (table?.overrideMoveData && id in table.overrideMoveData) {
 					Object.assign(data, table.overrideMoveData[id]);
 				}
 			}
 			if (this.modid !== `gen${this.gen}`) {
 				const table = window.BattleTeambuilderTable[this.modid];
-				if (id in table.overrideMoveData) {
+				if (table?.overrideMoveData && id in table.overrideMoveData) {
 					Object.assign(data, table.overrideMoveData[id]);
 				}
 			}
@@ -1061,13 +1097,13 @@ export class ModdedDex {
 
 			for (let i = Dex.gen - 1; i >= this.gen; i--) {
 				const table = window.BattleTeambuilderTable[`gen${i}`];
-				if (id in table.overrideItemData) {
+				if (table?.overrideItemData && id in table.overrideItemData) {
 					Object.assign(data, table.overrideItemData[id]);
 				}
 			}
 			if (this.modid !== `gen${this.gen}`) {
 				const table = window.BattleTeambuilderTable[this.modid];
-				if (id in table.overrideItemData) {
+				if (table?.overrideItemData && id in table.overrideItemData) {
 					Object.assign(data, table.overrideItemData[id]);
 				}
 			}
@@ -1091,13 +1127,13 @@ export class ModdedDex {
 
 			for (let i = Dex.gen - 1; i >= this.gen; i--) {
 				const table = window.BattleTeambuilderTable[`gen${i}`];
-				if (id in table.overrideAbilityData) {
+				if (table?.overrideAbilityData && id in table.overrideAbilityData) {
 					Object.assign(data, table.overrideAbilityData[id]);
 				}
 			}
 			if (this.modid !== `gen${this.gen}`) {
 				const table = window.BattleTeambuilderTable[this.modid];
-				if (id in table.overrideAbilityData) {
+				if (table?.overrideAbilityData && id in table.overrideAbilityData) {
 					Object.assign(data, table.overrideAbilityData[id]);
 				}
 			}
@@ -1124,13 +1160,13 @@ export class ModdedDex {
 
 			for (let i = Dex.gen - 1; i >= this.gen; i--) {
 				const table = window.BattleTeambuilderTable[`gen${i}`];
-				if (id in table.overrideSpeciesData) {
+				if (table?.overrideSpeciesData && id in table.overrideSpeciesData) {
 					Object.assign(data, table.overrideSpeciesData[id]);
 				}
 			}
 			if (this.modid !== `gen${this.gen}`) {
 				const table = window.BattleTeambuilderTable[this.modid];
-				if (id in table.overrideSpeciesData) {
+				if (table?.overrideSpeciesData && id in table.overrideSpeciesData) {
 					Object.assign(data, table.overrideSpeciesData[id]);
 				}
 			}
@@ -1139,7 +1175,7 @@ export class ModdedDex {
 			}
 
 			const table = window.BattleTeambuilderTable[this.modid];
-			if (id in table.overrideTier) data.tier = table.overrideTier[id];
+			if (table?.overrideTier && id in table.overrideTier) data.tier = table.overrideTier[id];
 			if (!data.tier && id.endsWith('totem')) {
 				data.tier = this.species.get(id.slice(0, -5)).tier;
 			}
@@ -1184,12 +1220,12 @@ export class ModdedDex {
 
 			for (let i = 7; i >= this.gen; i--) {
 				const table = window.BattleTeambuilderTable[`gen${i}`];
-				if (id in table.removeType) {
+				if (table?.removeType && id in table.removeType) {
 					data.exists = false;
 					// don't bother correcting its attributes given it doesn't exist
 					break;
 				}
-				if (id in table.overrideTypeChart) {
+				if (table?.overrideTypeChart && id in table.overrideTypeChart) {
 					data = { ...data, ...table.overrideTypeChart[id] };
 				}
 			}
