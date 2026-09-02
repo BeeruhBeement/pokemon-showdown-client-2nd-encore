@@ -735,10 +735,10 @@ export const Dex = new class implements ModdedDex {
 			spriteData.cryurl += '.mp3';
 		}
 
-		const activeMod = this.getModdedSpriteDataMod(species.id.toString(), 'species', options.dex || options.mod);
+		const activeMod = this.getModdedSpriteDataMod(species.id.toString(), 'species', (window as any).app?.curRoom?.battle?.dex?.modid);
 		if (activeMod) {
 			const data = this.getTeambuilderSpriteData(pokemon, Dex.mod(activeMod));
-			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + activeMod + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
+			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + activeMod + '/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
 			spriteData.pixelated = true;
 			spriteData.gen = 5;
 			return spriteData;
@@ -911,12 +911,6 @@ export const Dex = new class implements ModdedDex {
 		].includes(species.id) && !(species.isMega && species.gen === 9);
 		if (gen >= 8 && homeExists) {
 			spriteData.spriteDir = 'sprites/home-centered';
-			spriteData.x = 8;
-			spriteData.y = 10;
-			spriteData.h = 96;
-			return spriteData;
-		}
-		if (dex.modid === "gen9hellskitchen") {
 			spriteData.x = 8;
 			spriteData.y = 10;
 			spriteData.h = 96;
