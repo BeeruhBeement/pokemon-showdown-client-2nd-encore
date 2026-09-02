@@ -1463,7 +1463,7 @@
 			return factor;
 		},
 		pokemonDefensiveCoverage: function (set) {
-			var dex = Dex.forFormat('gen9ironfist');
+			var dex = (this.curTeam && this.curTeam.dex) || dex;
 			var coverage = {};
 
 			if (!set || !set.species) return coverage;

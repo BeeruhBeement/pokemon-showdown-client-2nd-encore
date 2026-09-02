@@ -1659,6 +1659,7 @@ export class Species implements Effect {
 }
 
 export interface Type extends Effect {
+	isNonstandard?: string | null;
 	damageTaken?: Record<Dex.TypeName | 'powder' | 'prankster' | 'trapped', Dex.WeaknessType>;
 	HPivs?: Partial<Dex.StatsTable>;
 	HPdvs?: Partial<Dex.StatsTable>;

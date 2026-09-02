@@ -650,7 +650,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'svdlc1' | 'svdlc1doubles' | 'stadium' | 'lc' |
 		'champions' | 'natdexchampions' |
-		'hellskitchen' | 'puffypink' | 'altermons' | 'ironfist' | 'typeshift' | 'ptest' |
+		'hellskitchen' | 'puffypink' | 'altermons' | 'ironfist' | 'typeshift' | 'ptest' | 'wordmons' |
 		null = null;
 	isDoubles = false;
 
@@ -821,6 +821,11 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType = 'ptest';
 			this.dex = Dex.mod('gen9ptest' as ID);
 			format = format.slice(5) as ID;
+		}
+		if (format.includes('wordmons')) {
+			this.formatType = 'wordmons';
+			this.dex = Dex.mod('gen9wordmons' as ID);
+			format = format.slice(8) as ID;
 		}
 		
 		this.format = format;
@@ -2234,12 +2239,14 @@ class BattleCategorySearch extends BattleTypedSearch<'category'> {
 
 class BattleTypeSearch extends BattleTypedSearch<'type'> {
 	getTable() {
-		return window.BattleTypeChart;
+		const table: { [id: string]: true } = {};
+		for (const type of this.dex.types.names()) table[toID(type)] = true;
+		return table;
 	}
 	getDefaultResults(reverseSort?: boolean): SearchRow[] {
 		const results: SearchRow[] = [];
-		for (let id in window.BattleTypeChart) {
-			results.push(['type', id as ID]);
+		for (const type of this.dex.types.names()) {
+			results.push(['type', toID(type) as ID]);
 		}
 		if (reverseSort) results.reverse();
 		return results;

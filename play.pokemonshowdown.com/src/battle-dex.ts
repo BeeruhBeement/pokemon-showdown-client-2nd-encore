@@ -303,6 +303,9 @@ export const Dex = new class implements ModdedDex {
 		if (dex.gen === 9 && formatid.includes('ptest')) {
 			dex = Dex.mod('gen9ptest' as ID);
 		}
+		if (dex.gen === 9 && formatid.includes('wordmons')) {
+			dex = Dex.mod('gen9wordmons' as ID);
+		}
 		return dex;
 	}
 
@@ -735,7 +738,7 @@ export const Dex = new class implements ModdedDex {
 		const activeMod = this.getModdedSpriteDataMod(species.id.toString(), 'species', options.dex || options.mod);
 		if (activeMod) {
 			const data = this.getTeambuilderSpriteData(pokemon, Dex.mod(activeMod));
-			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + activeMod + '/sprites/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
+			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + activeMod + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
 			spriteData.pixelated = true;
 			spriteData.gen = 5;
 			return spriteData;
@@ -863,7 +866,7 @@ export const Dex = new class implements ModdedDex {
 			`;opacity:.3;filter:grayscale(100%) brightness(.5)` : ``);
 		const activeMod = this.getModdedSpriteDataMod(id, 'species', dex);
 		if (activeMod) {
-			return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${activeMod}/sprites/icons/${id}.png') no-repeat scroll ${fainted}`;
+			return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${activeMod}/icons/${id}.png') no-repeat scroll ${fainted}`;
 		}
 		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v22) no-repeat scroll -${left}px -${top}px${fainted}`;
 	}
@@ -958,7 +961,7 @@ export const Dex = new class implements ModdedDex {
 		const mod = this.getModdedSpriteDataMod(toID(pokemon.species || pokemon), 'species', dex);
 
 		if (mod) {
-			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/' + mod + '/sprites/front' + shiny + '/' + data.spriteid + '.png';
+			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + mod + '/front' + shiny + '/' + data.spriteid + '.png';
 			return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
 		}
 
@@ -984,7 +987,7 @@ export const Dex = new class implements ModdedDex {
 				(typeof activeDex === 'string' ? toID(activeDex) : activeDex?.modid) ||
 				((window as any).app?.rooms?.teambuilder?.curTeam?.dex?.modid || null);
 			if (mod && mod !== 'gen9') {
-				return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${mod}/sprites/items/${itemId}.png') no-repeat scroll 0 0`;
+				return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${mod}/items/${itemId}.png') no-repeat scroll 0 0`;
 			}
 			if (itemId) {
 				return `background:transparent url(${Dex.resourcePrefix}sprites/items/${itemId}.png) no-repeat scroll 0 0`;
@@ -1012,7 +1015,7 @@ export const Dex = new class implements ModdedDex {
 		const typeData = activeMod?.types.get(type);
 		const spriteMod = typeData?.isNonstandard === 'Modded' ? modid : '';
 		if (spriteMod) {
-			return `<img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${spriteMod}/sprites/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
+			return `<img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${spriteMod}/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
 		}
 		return `<img src="${Dex.resourcePrefix}sprites/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
 	}
@@ -1212,9 +1215,22 @@ export class ModdedDex {
 		namesCache: null as readonly Dex.TypeName[] | null,
 		names: (): readonly Dex.TypeName[] => {
 			if (this.types.namesCache) return this.types.namesCache;
-			const names = Dex.types.names();
-			if (!names.length) return [];
-			const curNames = [...names];
+
+			const table = window.BattleTeambuilderTable[this.modid];
+			const baseNames = Dex.types.names();
+
+			const extraNames: Dex.TypeName[] = [];
+			for (const id in table?.overrideTypeChart || {}) {
+				const type = this.types.get(id);
+				if (type.isNonstandard !== 'Future') {
+					extraNames.push(type.name as Dex.TypeName);
+				}
+			}
+
+			// remove duplicates, sort alphabetically, remove nonexistent types
+			const curNames = Array.from(new Set([...baseNames, ...extraNames]))
+				.filter(name => this.types.get(name).isNonstandard !== 'Future').sort((a, b) => a.localeCompare(b));
+				
 			// if (this.gen < 9) curNames.splice(curNames.indexOf('Stellar'), 1);
 			if (this.gen < 6) curNames.splice(curNames.indexOf('Fairy'), 1);
 			if (this.gen < 2) curNames.splice(curNames.indexOf('Dark'), 1);
