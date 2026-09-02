@@ -1001,7 +1001,19 @@ export const Dex = new class implements ModdedDex {
 		type = this.types.get(type).name;
 		if (!type) type = '???';
 		let sanitizedType = type.replace(/\?/g, '%3f');
-		if (type === 'Lemon' || type === 'Silly' || type === 'Serious' || type === 'Friend') return `<img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/gen9ironfist/sprites/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
+		const app = (window as any).app;
+		const rooms = app?.rooms || {};
+		const teambuilder = app?.curRoom?.type === 'teambuilder' ? app.curRoom :
+			rooms.teambuilder || Object.values(rooms).find((room: any) => room?.type === 'teambuilder');
+		const activeDex = teambuilder?.curTeam?.dex ||
+			(teambuilder?.curTeam?.format ? Dex.forFormat(teambuilder.curTeam.format) : null);
+		const modid = toID(typeof activeDex === 'string' ? activeDex : activeDex?.modid || '') as ID;
+		const activeMod = typeof activeDex === 'string' ? Dex.mod(modid) : activeDex;
+		const typeData = activeMod?.types.get(type);
+		const spriteMod = typeData?.isNonstandard === 'Modded' ? modid : '';
+		if (spriteMod) {
+			return `<img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown/refs/heads/master/data/mods/${spriteMod}/sprites/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
+		}
 		return `<img src="${Dex.resourcePrefix}sprites/types/${sanitizedType}.png" alt="${type}" height="14" width="32" class="pixelated${b ? ' b' : ''}" />`;
 	}
 
@@ -1228,6 +1240,10 @@ export class ModdedDex {
 				if (table?.overrideTypeChart && id in table.overrideTypeChart) {
 					data = { ...data, ...table.overrideTypeChart[id] };
 				}
+			}
+			const table = window.BattleTeambuilderTable[this.modid];
+			if (table?.overrideTypeChart && id in table.overrideTypeChart) {
+				data = { ...data, ...table.overrideTypeChart[id] };
 			}
 
 			this.cache.Types[id] = data;
