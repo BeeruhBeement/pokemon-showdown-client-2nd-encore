@@ -1002,7 +1002,7 @@ export const Dex = new class implements ModdedDex {
 		const rooms = app?.rooms || {};
 		const teambuilder = app?.curRoom?.type === 'teambuilder' ? app.curRoom :
 			rooms.teambuilder || Object.values(rooms).find((room: any) => room?.type === 'teambuilder');
-		const activeDex = teambuilder?.curTeam?.dex ||
+		const activeDex = (window as any).app?.curRoom?.battle?.dex?.modid || teambuilder?.curTeam?.dex ||
 			(teambuilder?.curTeam?.format ? Dex.forFormat(teambuilder.curTeam.format) : null);
 		const modid = toID(typeof activeDex === 'string' ? activeDex : activeDex?.modid || '') as ID;
 		const activeMod = typeof activeDex === 'string' ? Dex.mod(modid) : activeDex;

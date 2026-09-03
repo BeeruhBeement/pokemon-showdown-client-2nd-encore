@@ -2847,12 +2847,14 @@ export class PokemonSprite extends Sprite {
 		} else if (pokemon.volatiles.typechange?.[1]) {
 			const types = pokemon.volatiles.typechange[1].split('/');
 			for (const type of types) {
-				status += '<img src="' + Dex.resourcePrefix + 'sprites/types/' + encodeURIComponent(type) + '.png" alt="' + type + '" class="pixelated" /> ';
+				status += Dex.getTypeIcon(type) + ' ';
+				//status += '<img src="' + Dex.resourcePrefix + 'sprites/types/' + encodeURIComponent(type) + '.png" alt="' + type + '" class="pixelated" /> ';
 			}
 		}
 		if (pokemon.volatiles.typeadd) {
 			const type = pokemon.volatiles.typeadd[1];
-			status += '+<img src="' + Dex.resourcePrefix + 'sprites/types/' + type + '.png" alt="' + type + '" class="pixelated" /> ';
+			status += '+' + Dex.getTypeIcon(type) + ' ';
+			//status += '+<img src="' + Dex.resourcePrefix + 'sprites/types/' + type + '.png" alt="' + type + '" class="pixelated" /> ';
 		}
 		for (const stat in pokemon.boosts) {
 			if (pokemon.boosts[stat]) {
