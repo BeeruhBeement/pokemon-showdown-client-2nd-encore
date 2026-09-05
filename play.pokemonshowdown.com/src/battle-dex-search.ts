@@ -2001,7 +2001,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen") && !this.formatType?.includes("altermons") && !this.formatType?.includes("ironfist")) && move.isNonstandard === "Past") {
+					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen") && !this.formatType?.includes("altermons") && !this.formatType?.includes("ironfist") && !this.formatType?.includes("ptest") && !this.formatType?.includes("typeshift")) && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (
