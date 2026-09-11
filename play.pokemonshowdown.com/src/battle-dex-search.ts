@@ -933,6 +933,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (this.formatType === 'ironfist') table = table['gen9ironfist'];
 		if (this.formatType === 'typeshift') table = table['gen9typeshift'];
 		if (this.formatType === 'ptest') table = table['gen9ptest'];
+		if (this.formatType === 'wordmons') table = table['gen9wordmons'];
 
 		if (speciesid in table.learnsets) return speciesid;
 		const species = this.dex.species.get(speciesid);
@@ -1013,6 +1014,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'ironfist') table = table['gen9ironfist'];
 			if (this.formatType === 'typeshift') table = table['gen9typeshift'];
 			if (this.formatType === 'ptest') table = table['gen9ptest'];
+			if (this.formatType === 'wordmons') table = table['gen9wordmons'];
 
 			let learnset = table.learnsets[learnsetid];
 			const eggMovesOnly = this.eggMovesOnly(learnsetid, speciesid);
@@ -1058,6 +1060,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'ironfist' ? `gen9ironfist` :
 			this.formatType === 'typeshift' ? `gen9typeshift` :
 			this.formatType === 'ptest' ? `gen9ptest` :
+			this.formatType === 'wordmons' ? `gen9wordmons` :
 
 			`gen${gen}`;
 		if (table?.[tableKey]) {
@@ -1185,6 +1188,8 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			table = table[`gen9typeshift`];
 		} else if (this.formatType === 'ptest') {
 			table = table[`gen9ptest`];
+		} else if (this.formatType === 'wordmons') {
+			table = table[`gen9wordmons`];
 		} else if (isVGCOrBS) {
 			table = table[`gen${dex.gen}vgc`];
 		} else if (dex.gen === 9 && isHackmons && !this.formatType) {
@@ -1579,6 +1584,8 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table[`gen9typeshift`];
 		} else if (this.formatType === 'ptest') {
 			table = table[`gen9ptest`];
+		} else if (this.formatType === 'wordmons') {
+			table = table[`gen9wordmons`];
 		} else if (this.dex.gen < 9) {
 			table = table[`gen${this.dex.gen}`];
 		}
@@ -1975,6 +1982,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType === 'ironfist') lsetTable = lsetTable['gen9ironfist'];
 		if (this.formatType === 'typeshift') lsetTable = lsetTable['gen9typeshift'];
 		if (this.formatType === 'ptest') lsetTable = lsetTable['gen9ptest'];
+		if (this.formatType === 'wordmons') lsetTable = lsetTable['gen9wordmons'];
 
 		if (this.formatType?.startsWith('ssdlc1')) lsetTable = lsetTable['gen8dlc1'];
 		if (this.formatType?.startsWith('predlc')) lsetTable = lsetTable['gen9predlc'];

@@ -3541,6 +3541,9 @@ export class Battle {
 			if (this.tier.includes(`PTest`)) {
 				this.dex = Dex.mod('gen9ptest' as ID);
 			}
+			if (this.tier.includes(`Wordmons`)) {
+				this.dex = Dex.mod('gen9wordmons' as ID);
+			}
 
 			this.log(args);
 			break;

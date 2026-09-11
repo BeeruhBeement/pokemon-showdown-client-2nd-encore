@@ -1328,6 +1328,24 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 	}
 
+	BattleTeambuilderTable['gen9wordmons'].learnsets = {};
+	const WordmonsLearnsets = Dex.mod('gen9wordmons').data.Learnsets;
+	for (const id in WordmonsLearnsets) {
+		const species = Dex.mod('gen9wordmons').species.get(id);
+		if (species.isNonstandard && !['Unobtainable', 'CAP', 'Past', 'Modded'].includes(species.isNonstandard)) continue;
+		const learnset = WordmonsLearnsets[id].learnset;
+		if (!learnset) continue;
+		BattleTeambuilderTable['gen9wordmons'].learnsets[id] = {};
+		for (const moveid in learnset) {
+			if (moveid in BattleTeambuilderTable['gen9wordmons'].learnsets[id]) {
+				if (BattleTeambuilderTable['gen9wordmons'].learnsets[id][moveid].includes('9')) continue;
+				BattleTeambuilderTable['gen9wordmons'].learnsets[id][moveid] += '9a';
+			} else {
+				BattleTeambuilderTable['gen9wordmons'].learnsets[id][moveid] = '9a';
+			}
+		}
+	}
+
 	const SSDLC1Learnsets = Dex.mod('gen8dlc1').data.Learnsets;
 	for (const id in SSDLC1Learnsets) {
 		const learnset = SSDLC1Learnsets[id].learnset;
@@ -1651,7 +1669,7 @@ process.stdout.write("Building `data/pokedex.js`... ");
 	const Pokedex = { ...BasePokedex };
 
 	// Merge modded species data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9ptest'];
+	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9ptest', 'gen9wordmons'];
 	for (const mod of mods) {
 		const modPokedex = Dex.mod(mod).data.Pokedex;
 		for (const id in modPokedex) {
@@ -1679,7 +1697,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Moves = { ...BaseMoves };
 
 	// Merge modded move data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift'];
+	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9wordmons'];
 	for (const mod of mods) {
 		const modMoves = Dex.mod(mod).data.Moves;
 		for (const id in modMoves) {
@@ -1709,7 +1727,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Items = { ...BaseItems };
 
 	// Merge modded item data
-	const mods = ['gen9hellskitchen', 'gen9ironfist'];
+	const mods = ['gen9hellskitchen', 'gen9ironfist', 'gen9wordmons'];
 	for (const mod of mods) {
 		const modItems = Dex.mod(mod).data.Items;
 		for (const id in modItems) {
@@ -1737,7 +1755,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Abilities = { ...BaseAbilities };
 
 	// Merge modded ability data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9ironfist'];
+	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9ironfist', 'gen9wordmons'];
 	for (const mod of mods) {
 		const modAbilities = Dex.mod(mod).data.Abilities;
 		for (const id in modAbilities) {
