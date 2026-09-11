@@ -306,6 +306,9 @@ export const Dex = new class implements ModdedDex {
 		if (dex.gen === 9 && formatid.includes('wordmons')) {
 			dex = Dex.mod('gen9wordmons' as ID);
 		}
+		if (dex.gen === 9 && formatid.includes('buildmons')) {
+			dex = Dex.mod('gen9buildmons' as ID);
+		}
 		return dex;
 	}
 

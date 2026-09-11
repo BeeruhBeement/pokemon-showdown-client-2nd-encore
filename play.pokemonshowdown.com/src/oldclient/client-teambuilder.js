@@ -1391,8 +1391,16 @@
 			buf += '<div class="setcol setcol-moves"><div class="setcell"><label>Moves</label>';
 			buf += '<input type="text" name="move1" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[0]) + '" autocomplete="off" /></div>';
 			buf += '<div class="setcell"><input type="text" name="move2" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[1]) + '" autocomplete="off" /></div>';
-			buf += '<div class="setcell"><input type="text" name="move3" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[2]) + '" autocomplete="off" /></div>';
-			buf += '<div class="setcell"><input type="text" name="move4" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[3]) + '" autocomplete="off" /></div>';
+			/*buf += '<div class="setcell"><input type="text" name="move3" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[2]) + '" autocomplete="off" /></div>';
+			buf += '<div class="setcell"><input type="text" name="move4" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[3]) + '" autocomplete="off" /></div>';*/
+			if (this.curTeam.format.includes('buildmons')) {
+				buf += '<div class="setcell"><input type="text" name="item2" class="textbox chartinput" style="height:12px;font-size:11px;" value="' + BattleLog.escapeHTML(set.moves[2]) + '" autocomplete="off" /></div>';
+				buf += '<div class="setcell"><input type="text" name="item3" class="textbox chartinput" style="height:12px;font-size:11px;" value="' + BattleLog.escapeHTML(set.moves[3]) + '" autocomplete="off" /></div>';
+				buf += '<div class="setcell"><input type="text" name="item4" class="textbox chartinput" style="height:12px;font-size:11px;" value="' + BattleLog.escapeHTML(set.moves[4]) + '" autocomplete="off" /></div>';
+			} else {
+				buf += '<div class="setcell"><input type="text" name="move3" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[2]) + '" autocomplete="off" /></div>';
+				buf += '<div class="setcell"><input type="text" name="move4" class="textbox chartinput" value="' + BattleLog.escapeHTML(set.moves[3]) + '" autocomplete="off" /></div>';
+			}
 			buf += '</div>';
 
 			// stats
@@ -2712,7 +2720,15 @@
 
 			if (this.curTeam.gen > 2) {
 				buf += '<p style="clear:both">Nature: <select name="nature" class="button">';
-				for (var i in BattleNatures) {
+				var natureKeys = Object.keys(BattleNatures);
+				var start = 0;
+				var end = 25;
+				if (this.curTeam.format.includes('buildmons')) {
+					start = 25;
+					end = 37;
+				}
+				for (var idx = start; idx < end; idx++) {
+					var i = natureKeys[idx];
 					var curNature = BattleNatures[i];
 					buf += '<option value="' + i + '"' + (curNature === nature ? 'selected="selected"' : '') + '>' + i;
 					if (curNature.plus) {
@@ -3255,6 +3271,9 @@
 			move2: 'move',
 			move3: 'move',
 			move4: 'move',
+			item2: 'item',
+			item3: 'item',
+			item4: 'item',
 			stats: 'stats',
 			details: 'details'
 		},
@@ -3286,6 +3305,11 @@
 					this.$('input[name=move2]').val(moves[1] || '');
 					this.$('input[name=move3]').val(moves[2] || '');
 					this.$('input[name=move4]').val(moves[3] || '');
+
+					this.$('input[name=item2]').val(moves[4] || '');
+					this.$('input[name=item3]').val(moves[5] || '');
+					this.$('input[name=item4]').val(moves[6] || '');
+
 					this.$('input[name=move' + Math.min(moves.length + 1, 4) + ']').focus();
 					this.curSet.moves = moves;
 					this.search.find('');
@@ -3415,7 +3439,7 @@
 					val = (id in BattleItems ? BattleItems[id].name : '');
 				}
 				break;
-			case 'move1': case 'move2': case 'move3': case 'move4':
+			case 'move1': case 'move2': case 'move3': case 'move4': case 'item2': case 'item3': case 'item4':
 				if (id in BattlePokedex && format && format.endsWith("pokemoves")) {
 					val = BattlePokedex[id].name;
 				} else if (id in BattleAbilities && format && format.endsWith("biomechmons")) {
@@ -3556,7 +3580,13 @@
 				this.unChooseMove(this.curSet.moves[1]);
 				this.curSet.moves[1] = val;
 				this.chooseMove(val);
-				if (selectNext) this.$('input[name=move3]').select();
+				if (selectNext) {
+					if(this.$('input[name=item2]').length) {
+						this.$('input[name=item2]').select();
+					} else {
+						this.$('input[name=move3]').select();
+					}
+				}
 				break;
 			case 'move3':
 				if (!this.curSet.moves[0]) this.curSet.moves[0] = '';
@@ -3573,6 +3603,21 @@
 				this.unChooseMove(this.curSet.moves[3]);
 				this.curSet.moves[3] = val;
 				this.chooseMove(val);
+				if (selectNext) {
+					this.stats();
+					this.$('button.setstats').focus();
+				}
+				break;
+			case 'item2':
+				this.curSet.moves[2] = val;
+				if (selectNext) this.$('input[name=item3]').select();
+				break;
+			case 'item3':
+				this.curSet.moves[3] = val;
+				if (selectNext) this.$('input[name=item4]').select();
+				break;
+			case 'item4':
+				this.curSet.moves[4] = val;
 				if (selectNext) {
 					this.stats();
 					this.$('button.setstats').focus();
@@ -3761,7 +3806,8 @@
 			} else {
 				set.item = '';
 			}
-			set.ability = species.abilities['0'];
+			if (baseFormat.includes('buildmons')) set.ability = species.abilities['skill'];
+			else set.ability = species.abilities['0'];
 
 			set.moves = [];
 			set.evs = {};
@@ -3809,7 +3855,7 @@
 			if (evOverride !== undefined) ev = evOverride;
 			if (ev === undefined) ev = (this.curTeam.gen > 2 ? 0 : 252);
 
-			if (stat === 'hp') {
+			if (stat === 'hp' && !this.curTeam.format.includes('buildmons')) {
 				if (baseStat === 1) return 1;
 				if (usesStatPoints) return baseStat + ev + 75;
 				if (!supportsEVs) return Math.floor(Math.floor(2 * baseStat + iv + 100) * set.level / 100 + 10) + (supportsAVs ? ev : 0);
@@ -3824,9 +3870,11 @@
 			if (natureOverride) {
 				val *= natureOverride;
 			} else if (BattleNatures[set.nature] && BattleNatures[set.nature].plus === stat) {
-				val *= 1.1;
+				if (set.nature === 'Fighter' || set.nature === 'Sorcerer' || set.nature === 'Tank') val *= 1.2
+				else val *= 1.1;
 			} else if (BattleNatures[set.nature] && BattleNatures[set.nature].minus === stat) {
-				val *= 0.9;
+				if (set.nature === 'Fighter' || set.nature === 'Sorcerer' || set.nature === 'Tank') val *= 0.8
+				else val *= 0.9;
 			}
 			if (!usesStatPoints && !supportsEVs) {
 				var friendshipValue = Math.floor((70 / 255 / 10 + 1) * 100);

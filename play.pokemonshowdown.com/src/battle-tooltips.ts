@@ -1106,11 +1106,17 @@ export class BattleTooltips {
 			const boostLevel = clientPokemon.boosts[clientStatName];
 			if (boostLevel) {
 				let boostTable = [1, 1.5, 2, 2.5, 3, 3.5, 4];
-				if (boostLevel > 0) {
-					stats[statName] *= boostTable[boostLevel];
-				} else {
-					if (this.battle.gen <= 2) boostTable = [1, 100 / 66, 2, 2.5, 100 / 33, 100 / 28, 4];
-					stats[statName] /= boostTable[-boostLevel];
+				if (this.battle.tier.includes('Buildmons')) {
+					stats[statName] *= 1 + boostLevel / 100;
+				} 
+				else
+				{
+					if (boostLevel > 0) {
+						stats[statName] *= boostTable[boostLevel];
+					} else {
+						if (this.battle.gen <= 2) boostTable = [1, 100 / 66, 2, 2.5, 100 / 33, 100 / 28, 4];
+						stats[statName] /= boostTable[-boostLevel];
+					}
 				}
 				stats[statName] = Math.floor(stats[statName]);
 			}
@@ -1211,9 +1217,11 @@ export class BattleTooltips {
 		}
 		if (weather) {
 			if (this.battle.gen >= 4 && this.pokemonHasType(pokemon, 'Rock') && weather === 'sandstorm') {
+				if (this.battle.tier.includes("Buildmons")) stats.spd = Math.floor(stats.spd * 1.2);
 				stats.spd = Math.floor(stats.spd * 1.5);
 			}
 			if (this.pokemonHasType(pokemon, 'Ice') && weather === 'snowscape') {
+				if (this.battle.tier.includes("Buildmons")) stats.def = Math.floor(stats.def * 1.2);
 				stats.def = Math.floor(stats.def * 1.5);
 			}
 			if (ability === 'sandrush' && weather === 'sandstorm') {
