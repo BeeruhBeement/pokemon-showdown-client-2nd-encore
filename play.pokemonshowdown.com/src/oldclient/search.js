@@ -351,7 +351,10 @@
 		// abilities
 		if (gen >= 3 && !(this.engine && this.engine.dex.modid === 'gen7letsgo')) {
 			var abilities = pokemon.abilities;
-			if (gen >= 5) {
+			if (this.engine.dex.modid.includes('buildmons')) {
+				buf += '<span class="col abilitycol">' + abilities['skill'] + '</span>';
+				buf += '<span class="col abilitycol">' + (abilities['5'] ? abilities['5'] : '') + '</span>';
+			} else if (gen >= 5) {
 				if (abilities['1']) {
 					buf += '<span class="col twoabilitycol">' + abilities['0'] + '<br />' +
 						abilities['1'] + '</span>';

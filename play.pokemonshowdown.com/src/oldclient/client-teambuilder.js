@@ -1366,13 +1366,17 @@
 
 			// item/type icons
 			buf += '<div class="setrow setrow-icons">';
-			buf += '<div class="setcell">';
-			var itemicon = '<span class="itemicon"></span>';
-			if (set.item) {
-				var item = this.curTeam.dex.items.get(set.item);
-				itemicon = '<span class="itemicon" style="' + Dex.getItemIcon(item) + '"></span>';
+			buf += '<div class="setcell" style="display: flex; align-items: center; gap: 4px;">';
+
+			var item = set.item ? this.curTeam.dex.items.get(set.item) : null;
+			buf += '<span class="itemicon" style="' + (item ? Dex.getItemIcon(item) : '') + '"></span>';
+
+			if (this.curTeam.format.includes('buildmons')) {
+				[2, 3, 4].forEach(function(index) {
+					var moveItem = set.moves[index] ? this.curTeam.dex.items.get(set.moves[index]) : null;
+					buf += '<span class="itemicon" data-slot="' + index + '" style="' + (moveItem ? Dex.getItemIcon(moveItem) : '') + '"></span>';
+				}, this);
 			}
-			buf += itemicon;
 			buf += '</div>';
 			buf += '<div class="setcell setcell-typeicons">';
 			var types = species.types;
@@ -2199,6 +2203,19 @@
 				this.$('.setcol-details .itemicon').css('background', Dex.getItemIcon(item).substr(11));
 			} else {
 				this.$('.setcol-details .itemicon').css('background', 'none');
+			}
+
+			if (this.curTeam.format && this.curTeam.format.includes('buildmons')) {
+				[2, 3, 4].forEach(function (index) {
+					var moveItem = set.moves[index] ? this.curTeam.dex.items.get(set.moves[index]) : null;
+					var $icon = this.$('.setcol-details .itemicon[data-slot="' + index + '"]');
+					
+					if (moveItem && moveItem.id) {
+						$icon.css('background', Dex.getItemIcon(moveItem).substr(11));
+					} else {
+						$icon.css('background', 'none');
+					}
+				}, this);
 			}
 
 			this.updateStatGraph();
@@ -3610,14 +3627,17 @@
 				break;
 			case 'item2':
 				this.curSet.moves[2] = val;
+				this.updatePokemonSprite();
 				if (selectNext) this.$('input[name=item3]').select();
 				break;
 			case 'item3':
 				this.curSet.moves[3] = val;
+				this.updatePokemonSprite();
 				if (selectNext) this.$('input[name=item4]').select();
 				break;
 			case 'item4':
 				this.curSet.moves[4] = val;
+				this.updatePokemonSprite();
 				if (selectNext) {
 					this.stats();
 					this.$('button.setstats').focus();
