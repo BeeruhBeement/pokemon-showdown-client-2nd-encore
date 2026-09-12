@@ -1429,6 +1429,9 @@
 				if (isLC) {
 					highestStat = j === 'hp' ? 45 : 29;
 				}
+				if (this.curTeam.format.includes('buildmons')) {
+					highestStat = 499;
+				}
 				var width = stats[j] * 75 / highestStat;
 				if (width > 75) width = 75;
 				var color = Math.floor(stats[j] * 180 / highestStat);
@@ -2254,6 +2257,9 @@
 				if (isLC) {
 					highestStat = stat === 'hp' ? 45 : 29;
 				}
+				if (this.curTeam.format.includes('buildmons')) {
+					highestStat = 499;
+				}
 				var width = stats[stat] * 75 / highestStat;
 				if (width > 75) width = 75;
 				var color = Math.floor(stats[stat] * 180 / highestStat);
@@ -2282,6 +2288,9 @@
 				}
 				if (isLC) {
 					highestStat = stat === 'hp' ? 45 : 29;
+				}
+				if (this.curTeam.format.includes('buildmons')) {
+					highestStat = 499;
 				}
 				var width = stats[stat] * 180 / highestStat;
 				if (width > 179) width = 179;
@@ -2550,6 +2559,9 @@
 				}
 				if (isLC) {
 					highestStat = i === 'hp' ? 45 : 29;
+				}
+				if (this.curTeam.format.includes('buildmons')) {
+					highestStat = 499;
 				}
 				var width = stats[i] * 180 / highestStat;
 				if (width > 179) width = 179;
