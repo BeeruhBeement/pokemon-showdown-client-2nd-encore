@@ -497,7 +497,7 @@
 					// support dragging and dropping buttons.
 					buf += '<li><div name="edit" data-value="' + i + '" class="team';
 					if (team.capacity === 24) buf += ' pc-box';
-					buf += '" draggable="true">' + BattleLog.escapeHTML(formatText) + '<strong>' + BattleLog.escapeHTML(team.name) + '</strong><br /><small>';
+					buf += '" draggable="true"><strong><span>' + BattleLog.escapeHTML(formatText) + '</span>' + BattleLog.escapeHTML(team.name) + '</strong><small>';
 					buf += Storage.getTeamIcons(team);
 					buf += '</small></div><button name="edit" value="' + i + '"><i class="fa fa-pencil" aria-label="Edit" title="Edit (you can also just click on the team)"></i></button><button name="duplicate" value="' + i + '" title="Duplicate" aria-label="Duplicate"><i class="fa fa-clone"></i></button><button name="delete" value="' + i + '"><i class="fa fa-trash"></i> Delete</button></li>';
 
@@ -3729,6 +3729,7 @@
 
 			if (this.curTeam.format.includes('1v1') || this.curTeam.format.includes('categoryswap') ||
 				this.curTeam.format.includes('partnersincrime') || this.curTeam.format.includes('typesplit') ||
+				this.curTeam.format.includes('noholdsbarred') ||
 				this.curTeam.format.includes('champions')) return;
 			if (this.curTeam.format === 'gen7hiddentype') return;
 

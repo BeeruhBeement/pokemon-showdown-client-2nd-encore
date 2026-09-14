@@ -31,7 +31,7 @@
 import { BattleSceneStub } from './battle-scene-stub';
 import { BattleLog } from './battle-log';
 import { BattleScene, type PokemonSprite, BattleStatusAnims } from './battle-animations';
-import { Dex, toID, toUserid, type ID, type ModdedDex } from './battle-dex';
+import { Dex, PSUtils, toID, toUserid, type ID, type ModdedDex } from './battle-dex';
 import { BattleTextParser, type Args, type KWArgs, type SideID } from './battle-text-parser';
 import { Teams } from './battle-teams';
 declare const app: { user: AnyObject, rooms: AnyObject, ignore?: AnyObject } | undefined;
@@ -614,6 +614,13 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 			let ratio = (range[0] + range[1]) / 2;
 			return Math.round(maxWidth * ratio) || 1;
 		}
+		if (this.side.battle.hpPercentageMod) {
+			let percentage = Math.ceil(100 * this.hp / this.maxhp);
+			if ((percentage === 100) && (this.hp < this.maxhp)) {
+				percentage = 99;
+			}
+			return percentage * maxWidth / 100;
+		}
 		const width = Math.round(this.hp / this.maxhp * maxWidth) || 1;
 		return this.hp < this.maxhp && width === maxWidth ? maxWidth - 1 : width;
 	}
@@ -1043,7 +1050,7 @@ export interface ServerPokemon extends PokemonDetails, PokemonHealth {
 	details: string;
 	condition: string;
 	active: boolean;
-	reviving: boolean;
+	reviving?: boolean;
 	commanding: boolean;
 	/** unboosted stats */
 	stats: {
@@ -1155,6 +1162,7 @@ export class Battle {
 	rules: { [ruleName: string]: 1 | undefined } = {};
 	isBlitz = false;
 	reportExactHP = false;
+	hpPercentageMod = false;
 	endLastTurnPending = false;
 	totalTimeLeft = 0;
 	graceTimeLeft = 0;
@@ -3608,6 +3616,7 @@ export class Battle {
 				this.isBlitz = true;
 			}
 			if (ruleName === 'Exact HP Mod') this.reportExactHP = true;
+			if (ruleName === 'HP Percentage Mod') this.hpPercentageMod = true;
 			this.rules[ruleName] = 1;
 			this.log(args);
 			break;
@@ -3928,11 +3937,11 @@ export class Battle {
 				} else {
 					this.runMajor(args, kwArgs, preempt);
 				}
-			} catch (err: any) {
-				this.log(['majorerror', 'Error parsing: ' + str + ' (' + err + ')']);
-				if (err.stack) {
-					let stack = ('' + err.stack).split('\n');
-					for (const line of stack) {
+			} catch (err) {
+				this.log(['majorerror', 'Error parsing: ' + str]);
+				const stack = PSUtils.normalizeError(err);
+				if (stack) {
+					for (const line of stack.split('\n')) {
 						if (/\brun\b/.test(line)) {
 							break;
 						}

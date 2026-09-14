@@ -11,7 +11,7 @@
 
 import preact from "../js/lib/preact";
 import type { Pokemon, ServerPokemon } from "./battle";
-import { Dex, toID } from "./battle-dex";
+import { Dex, PSUtils, TL, toID } from "./battle-dex";
 import type { Args } from "./battle-text-parser";
 import { BattleTooltips } from "./battle-tooltips";
 import { Net } from "./client-connection";
@@ -100,7 +100,7 @@ export class PSRouter {
 		const panelState = (PS.leftPanelWidth && room === PS.panel ?
 			PS.leftPanel.id + '..' + PS.rightPanel!.id :
 			room.id);
-		const newTitle = roomid === '' ? 'Showdown!' : `${room.title} - Showdown!`;
+		const newTitle = roomid === '' ? 'Showdown!' : `${room.getTitle()} - Showdown!`;
 		let changed: boolean | null = (roomid !== this.roomid);
 
 		this.roomid = roomid;
@@ -254,7 +254,7 @@ export class PSRoomPanel<T extends PSRoom = PSRoom> extends preact.Component<{ r
 		PS.leave(this.props.room.id);
 	}
 	componentDidCatch(err: Error) {
-		this.props.room.caughtError = err.stack || err.message;
+		this.props.room.caughtError = PSUtils.normalizeError(err);
 		this.setState({});
 	}
 	receiveLine(args: Args) {}
@@ -266,7 +266,7 @@ export class PSRoomPanel<T extends PSRoom = PSRoom> extends preact.Component<{ r
 	chooseParentValue(value: string) {
 		const dropdownButton = this.props.room.parentElem as HTMLButtonElement;
 		dropdownButton.value = value;
-		if (dropdownButton.getAttribute('data-href') !== '/formatdropdown') {
+		if (!dropdownButton.getAttribute('data-href')) {
 			// button was made by |html| rather than <FormatDropdown>
 			dropdownButton.innerText = value;
 		}
@@ -284,7 +284,7 @@ export class PSRoomPanel<T extends PSRoom = PSRoom> extends preact.Component<{ r
 	}
 	override render() {
 		return <PSPanelWrapper room={this.props.room}>
-			<div class="mainmessage"><p>Loading...</p></div>
+			<div class="mainmessage"><p>{TL`Loading...`}</p></div>
 		</PSPanelWrapper>;
 	}
 }
@@ -344,7 +344,7 @@ export function PSPanelWrapper(props: {
 
 export class PSPanelErrorBoundary extends preact.Component<{ room: PSRoom }> {
 	componentDidCatch(err: Error) {
-		this.props.room.caughtError = err.stack || err.message;
+		this.props.room.caughtError = PSUtils.normalizeError(err);
 		this.setState({});
 	}
 	override render() {
@@ -452,7 +452,6 @@ export class PSView extends preact.Component {
 		if (this.scrollFrame) {
 			if (this.useScrollFrame()) {
 				this.scrollFrame.scrollLeft = Math.max(this.scrollFrame.scrollLeft, window.scrollX);
-				if (window.scrollX) window.scrollTo(0, window.scrollY);
 			} else if (this.scrollFrame.scrollLeft) {
 				this.scrollFrame.scrollLeft = 0;
 			}
@@ -562,6 +561,9 @@ export class PSView extends preact.Component {
 		if (dx < 0) return scrollX < NARROW_MODE_HEADER_WIDTH - 1;
 		if (dx > 0) return scrollX > 1;
 		return true;
+	}
+	static hasTextSelection() {
+		return window.getSelection()?.type === 'Range';
 	}
 	static clearSnap() {
 		if (this.snapTimeout) {
@@ -690,7 +692,8 @@ export class PSView extends preact.Component {
 		this.snapFrame = requestAnimationFrame(animate);
 	}
 	static startSnapGesture(x: number, y: number, target: EventTarget | null) {
-		if (!this.shouldJSSnap()) return;
+		if (!this.shouldJSSnap() || this.hasTextSelection()) return;
+		if ((target as HTMLInputElement)?.type === 'range') return;
 		this.clearSnap();
 		const now = performance.now();
 		this.snapStart = {
@@ -705,7 +708,16 @@ export class PSView extends preact.Component {
 		this.updateSnapDebug('start');
 	}
 	static moveSnapGesture(x: number, y: number) {
-		if (!this.shouldJSSnap() || !this.snapStart) return false;
+		if (!this.snapStart) return false;
+		if (!this.shouldJSSnap()) {
+			this.clearSnap();
+			return false;
+		}
+		if (this.hasTextSelection()) {
+			this.snapStart = null;
+			this.updateSnapDebug('text selection');
+			return false;
+		}
 		const start = this.snapStart;
 		const now = performance.now();
 		const dx = x - start.x;
@@ -743,7 +755,16 @@ export class PSView extends preact.Component {
 		return true;
 	}
 	static finishSnapGesture(x: number, y: number) {
-		if (!this.shouldJSSnap() || !this.snapStart) return;
+		if (!this.snapStart) return;
+		if (!this.shouldJSSnap()) {
+			this.clearSnap();
+			return;
+		}
+		if (this.hasTextSelection()) {
+			this.snapStart = null;
+			this.updateSnapDebug('text selection');
+			return;
+		}
 		const now = performance.now();
 		const dx = x - this.snapStart.x;
 		const dy = y - this.snapStart.y;
@@ -1148,13 +1169,6 @@ export class PSView extends preact.Component {
 			const altShiftKey = !ev.ctrlKey && ev.altKey && !ev.metaKey && ev.shiftKey;
 			const shiftKey = !ev.ctrlKey && !ev.altKey && !ev.metaKey && ev.shiftKey;
 			const kc = ev.keyCode;
-			if (altShiftKey && (kc === 37 || kc === 38)) { // alt + shift + left or up
-				PS.arrowKeysUsed = true;
-				PS.focusUnreadRoom('left');
-			} else if (altShiftKey && (kc === 39 || kc === 40)) { // alt + shift + right or down
-				PS.arrowKeysUsed = true;
-				PS.focusUnreadRoom('right');
-			}
 			if (altKey && kc === 38) { // alt + up
 				PS.arrowKeysUsed = true;
 				PS.focusUpRoom();
@@ -1183,7 +1197,13 @@ export class PSView extends preact.Component {
 
 			if (isNonEmptyTextInput) return;
 
-			if (altKey && kc === 37) { // alt + left
+			if (altShiftKey && (kc === 37 || kc === 38)) { // alt + shift + left or up
+				PS.arrowKeysUsed = true;
+				PS.focusUnreadRoom('left');
+			} else if (altShiftKey && (kc === 39 || kc === 40)) { // alt + shift + right or down
+				PS.arrowKeysUsed = true;
+				PS.focusUnreadRoom('right');
+			} else if (altKey && kc === 37) { // alt + left
 				PS.arrowKeysUsed = true;
 				PS.focusLeftRoom();
 			} else if (altKey && kc === 39) { // alt + right
@@ -1327,8 +1347,12 @@ export class PSView extends preact.Component {
 				}
 			}
 			PS.alert(
-				`Sorry, we don't know what to do with that file.\n\nSupported file types:\n` +
-				`- images (to set your background)\n- downloaded replay files\n- team files`
+				TL`Sorry, we don't know what to do with that file.
+
+Supported file types:
+- images (to set your background)
+- downloaded replay files
+- team files`
 			);
 			PS.dragging = null;
 		});
@@ -1487,7 +1511,7 @@ export class PSView extends preact.Component {
 		return false;
 	}
 	componentDidCatch(err: Error) {
-		PS.mainmenu.caughtError = err.stack || err.message;
+		PS.mainmenu.caughtError = PSUtils.normalizeError(err);
 		this.setState({});
 	}
 	static containingRoomid(elem: HTMLElement) {
@@ -1525,7 +1549,7 @@ export class PSView extends preact.Component {
 
 		return { display: 'none' };
 	}
-	static getPopupStyle(room: PSRoom, width?: number | 'auto', fullSize?: boolean): any {
+	static getPopupStyle(room: PSRoom, maxWidth?: number | 'auto', fullSize?: boolean): any {
 		if (fullSize) {
 			return { width: '90%', maxHeight: '90%', maxWidth: 'none', position: 'relative', margin: '5vh auto 0' };
 		}
@@ -1538,7 +1562,7 @@ export class PSView extends preact.Component {
 		}
 
 		if (!room.parentElem || !source) {
-			return { maxWidth: width || 480 };
+			return { maxWidth: maxWidth || 480 };
 		}
 		if (!room.width || !room.height) {
 			room.focusNextUpdate = true;
@@ -1550,7 +1574,7 @@ export class PSView extends preact.Component {
 				margin: 0,
 				top: 0,
 				left: 0,
-				...(width ? { maxWidth: typeof width === 'number' ? width - 2 : width } : {}),
+				...(maxWidth ? { maxWidth: typeof maxWidth === 'number' ? maxWidth - 2 : maxWidth } : {}),
 			};
 		}
 		// nonmodal popup: should be positioned near source element
@@ -1565,8 +1589,11 @@ export class PSView extends preact.Component {
 		const isFixed = room.location !== 'popup';
 		const offsetLeft = isFixed || this.useScrollFrame() ? 0 : window.scrollX;
 		const offsetTop = isFixed ? 0 : window.scrollY;
-		const availableWidth = document.documentElement.clientWidth + offsetLeft;
-		const availableHeight = document.documentElement.clientHeight;
+
+		// overlay might have a scrollbar, which changes the available space
+		const overlay = isFixed ? document.getElementById(`room-${room.id}`)?.parentElement : null;
+		const availableWidth = (overlay?.clientWidth || document.documentElement.clientWidth) + offsetLeft;
+		const availableHeight = overlay?.clientHeight || document.documentElement.clientHeight;
 
 		const sourceWidth = source.width;
 		const sourceHeight = source.height;
@@ -1574,7 +1601,7 @@ export class PSView extends preact.Component {
 		const sourceLeft = source.left + offsetLeft;
 
 		const height = room.height;
-		width = width || room.width;
+		const width = room.width;
 
 		if (room.rightPopup) {
 
@@ -1587,7 +1614,7 @@ export class PSView extends preact.Component {
 				style.top = Math.max(0, availableHeight - height);
 			}
 			const popupLeft = sourceLeft + sourceWidth;
-			if (width !== 'auto' && popupLeft + width > availableWidth) {
+			if (popupLeft + width > availableWidth) {
 				// can't fit, give up and put it in the normal place
 				style = {
 					position: 'absolute',
@@ -1613,7 +1640,7 @@ export class PSView extends preact.Component {
 			}
 
 			const availableAlignedWidth = availableWidth - sourceLeft;
-			if (width !== 'auto' && availableAlignedWidth < width + 10) {
+			if (availableAlignedWidth < width + 10) {
 				// while `right: 10` would be simpler, it doesn't work if there is horizontal scrolling,
 				// like in the mobile layout
 				style.left = Math.max(availableWidth - width - 10, offsetLeft);
@@ -1624,7 +1651,7 @@ export class PSView extends preact.Component {
 		}
 
 		// -2 to exclude 1px border on each side
-		if (width) style.maxWidth = typeof width === 'number' ? width - 2 : width;
+		if (maxWidth) style.maxWidth = typeof maxWidth === 'number' ? maxWidth - 2 : maxWidth;
 
 		return style;
 	}
@@ -1638,7 +1665,7 @@ export class PSView extends preact.Component {
 	}
 	renderDebugMenu() {
 		if (PSView.debugMenu === 'panels') {
-			return `room: ${JSON.stringify(PS.room?.id)}\n` +
+			return `room: ${JSON.stringify(PS.room?.id)} (connected: ${JSON.stringify(PS.room?.connected)}) (connectMode: ${JSON.stringify(PS.room?.connectMode)})\n` +
 				`onepanel: ${JSON.stringify(PS.prefs.onepanel)}, leftPanelWidth: ${JSON.stringify(PS.leftPanelWidth)}\n` +
 				`panel: ${JSON.stringify(PS.panel?.id)}, left: ${JSON.stringify(PS.leftPanel?.id)}, right: ${JSON.stringify(PS.rightPanel?.id)}\n` +
 				`popups: ${JSON.stringify(PS.popups)}`;
@@ -1697,39 +1724,40 @@ export function PSIcon(
 		return <span class="itemicon" style={Dex.getItemIcon(props.item)} />;
 	}
 	if ('type' in props) {
-		let type = Dex.types.get(props.type).name;
-		if (!type) type = '???';
+		const type = Dex.types.get(props.type);
+		const typeName = type.name || '???';
 		if (props.new) {
-			return <span class={`typeicon typeicon-${type}${props.tera ? ' tera' : ''}`}>{type}</span>;
+			return <span class={`typeicon typeicon-${typeName}${props.tera ? ' tera' : ''}`}>{TL(type)}</span>;
 		}
-		let sanitizedType = type.replace(/\?/g, '%3f');
+		const sanitizedType = typeName.replace(/\?/g, '%3f');
 		return <img
-			src={`${Dex.resourcePrefix}sprites/types/${sanitizedType}.png`} alt={type}
+			src={`${Dex.resourcePrefix}sprites/types/${sanitizedType}.png`} alt={TL.type[typeName] || typeName}
 			height="14" width="32" class={`pixelated${props.b ? ' b' : ''}`} style="vertical-align:middle"
 		/>;
 	}
 	if ('category' in props) {
 		const categoryID = toID(props.category);
-		let sanitizedCategory = '';
+		let categoryName = '';
 		switch (categoryID) {
 		case 'physical':
 		case 'special':
 		case 'status':
-			sanitizedCategory = categoryID.charAt(0).toUpperCase() + categoryID.slice(1);
+			categoryName = categoryID.charAt(0).toUpperCase() + categoryID.slice(1);
 			break;
 		default:
-			sanitizedCategory = 'undefined';
+			categoryName = 'undefined';
 			break;
 		}
 		return <img
-			src={`${Dex.resourcePrefix}sprites/categories/${sanitizedCategory}.png`} alt={sanitizedCategory}
+			src={`${Dex.resourcePrefix}sprites/categories/${categoryName}.png`}
+			alt={TL.tag[categoryID] || categoryName}
 			height="14" width="32" class="pixelated" style="vertical-align:middle"
 		/>;
 	}
 	if ('gender' in props) {
 		return <img
 			src={`${Dex.resourcePrefix}sprites/misc/gender-${props.gender.toLowerCase()}.png`}
-			width={18} height={18} alt={props.gender} style="margin-top: -1px; filter: grayscale(30%)"
+			width={18} height={18} alt={TL.gender[props.gender] || props.gender} style="margin-top: -1px; filter: grayscale(30%)"
 		/>;
 	}
 	return null!;
