@@ -11,7 +11,7 @@
  * @license MIT
  */
 
-import { Dex, type ModdedDex, TL, toID, type ID } from "./battle-dex";
+import { Dex, type ModdedDex, toID, type ID } from "./battle-dex";
 import type { PSSearchResults } from "./battle-searchresults";
 
 export type SearchType = (
@@ -74,23 +74,8 @@ export class DexSearch {
 		category: 'Category',
 		article: 'Article',
 	};
-	static getTypeName(type: SearchType) {
-		switch (type) {
-		case 'pokemon': return TL`Pokémon`;
-		case 'type': return TL`Types`;
-		case 'move': return TL`Moves`;
-		case 'item': return TL`Items`;
-		case 'ability': return TL`Abilities`;
-		case 'egggroup': return TL`Egg Groups`;
-		case 'category': return TL`Categories`;
-		case 'tier': return TL`Tiers`;
-		case 'article': return TL`Article`;
-		default: return DexSearch.typeName[type];
-		}
-	}
 	static unselectableResultTypes = ['header', 'html', 'sortpokemon', 'sortmove'];
 	firstPokemonColumn: 'Tier' | 'Number' = 'Number';
-	numAbilityCols: 0 | 1 | 2 = 0;
 
 	/**
 	 * Column to sort by. Default is `null`, a smart sort determined by how good
@@ -208,13 +193,7 @@ export class DexSearch {
 			this.sortCol = null;
 		}
 		this.typedSearch = this.getTypedSearch(searchType, format, speciesOrSet);
-		this.numAbilityCols = 0;
-		if (this.typedSearch) {
-			this.dex = this.typedSearch.dex;
-			if (searchType === 'pokemon' && this.dex.gen >= 3 && this.dex.modid !== 'gen7letsgo') {
-				this.numAbilityCols = this.dex.gen < 5 ? 1 : 2;
-			}
-		}
+		if (this.typedSearch) this.dex = this.typedSearch.dex;
 	}
 
 	capitalizeFirst(str: string) {
@@ -521,19 +500,19 @@ export class DexSearch {
 				// searchType buckets are always on top (but under bucket 0), so
 				// illegal results will be seamlessly right under legal results.
 				if (!bufs[typeIndex].length && !bufs[0].length) {
-					bufs[0] = [['header', DexSearch.getTypeName(type)]];
+					bufs[0] = [['header', DexSearch.typeName[type]]];
 				}
 				if (!(id in illegal)) typeIndex = 0;
 				// Move illegal pokemon to the bottom of the results
 				if (id in illegal && searchTypeIndex === 1) {
 					typeIndex = 8;
 					if (!bufs[typeIndex].length) {
-						bufs[typeIndex] = [['header', TL`Illegal Pokémon`]];
+						bufs[typeIndex] = [['header', "Illegal Pok\u00e9mon"]];
 					}
 				}
 			} else {
 				if (!bufs[typeIndex].length) {
-					bufs[typeIndex] = [['header', DexSearch.getTypeName(type)]];
+					bufs[typeIndex] = [['header', DexSearch.typeName[type]]];
 				}
 			}
 
@@ -577,8 +556,7 @@ export class DexSearch {
 			switch (fType) {
 			case 'type':
 				let type = fId.charAt(0).toUpperCase() + fId.slice(1) as Dex.TypeName;
-				const typeName = TL.type[type] || type;
-				buf.push(['header', TL`${typeName}-type Pokémon`]);
+				buf.push(['header', `${type}-type Pok\u00e9mon`]);
 				for (let id in BattlePokedex) {
 					if (!BattlePokedex[id].types) continue;
 					if (this.dex.species.get(id).types.includes(type)) {
@@ -588,8 +566,7 @@ export class DexSearch {
 				break;
 			case 'ability':
 				let ability = Dex.abilities.get(fId).name;
-				const abilityName = TL(Dex.abilities.get(fId));
-				buf.push(['header', TL`${abilityName} Pokémon`]);
+				buf.push(['header', `${ability} Pok\u00e9mon`]);
 				for (let id in BattlePokedex) {
 					if (!BattlePokedex[id].abilities) continue;
 					if (Dex.hasAbility(this.dex.species.get(id), ability)) {
@@ -602,8 +579,7 @@ export class DexSearch {
 			switch (fType) {
 			case 'type':
 				let type = fId.charAt(0).toUpperCase() + fId.slice(1);
-				const typeName = TL.type[type] || type;
-				buf.push(['header', TL`${typeName}-type moves`]);
+				buf.push(['header', `${type}-type moves`]);
 				for (let id in BattleMovedex) {
 					if (BattleMovedex[id].type === type) {
 						(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
@@ -612,8 +588,7 @@ export class DexSearch {
 				break;
 			case 'category':
 				let category = fId.charAt(0).toUpperCase() + fId.slice(1);
-				const categoryName = TL.tag[fId] || category;
-				buf.push(['header', TL`${categoryName} moves`]);
+				buf.push(['header', `${category} moves`]);
 				for (let id in BattleMovedex) {
 					if (BattleMovedex[id].category === category) {
 						(illegal && id in illegal ? illegalBuf : buf).push(['move', id as ID]);
@@ -943,7 +918,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			results = [this.sortRow, ...results];
 		}
 		if (illegalResults?.length) {
-			results = [...results, ['header', TL`Illegal results`], ...illegalResults];
+			results = [...results, ['header', "Illegal results"], ...illegalResults];
 		}
 		return results;
 	}
@@ -1138,39 +1113,38 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 		return BattlePokedex;
 	}
 	getDefaultResults(): SearchRow[] {
-		const genHeader = (num: string) => TL`Generation ${num}`;
 		let results: SearchRow[] = [];
 		for (let id in BattlePokedex) {
 			switch (id) {
 			case 'bulbasaur':
-				results.push(['header', genHeader('1')]);
+				results.push(['header', "Generation 1"]);
 				break;
 			case 'chikorita':
-				results.push(['header', genHeader('2')]);
+				results.push(['header', "Generation 2"]);
 				break;
 			case 'treecko':
-				results.push(['header', genHeader('3')]);
+				results.push(['header', "Generation 3"]);
 				break;
 			case 'turtwig':
-				results.push(['header', genHeader('4')]);
+				results.push(['header', "Generation 4"]);
 				break;
 			case 'victini':
-				results.push(['header', genHeader('5')]);
+				results.push(['header', "Generation 5"]);
 				break;
 			case 'chespin':
-				results.push(['header', genHeader('6')]);
+				results.push(['header', "Generation 6"]);
 				break;
 			case 'rowlet':
-				results.push(['header', genHeader('7')]);
+				results.push(['header', "Generation 7"]);
 				break;
 			case 'grookey':
-				results.push(['header', genHeader('8')]);
+				results.push(['header', "Generation 8"]);
 				break;
 			case 'sprigatito':
-				results.push(['header', genHeader('9')]);
+				results.push(['header', "Generation 9"]);
 				break;
 			case 'missingno':
-				results.push(['header', TL`Glitch`]);
+				results.push(['header', "Glitch"]);
 				break;
 			case 'syclar':
 				results.push(['header', "CAP"]);
@@ -1520,9 +1494,9 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 		let species = dex.species.get(this.species);
 		let abilitySet: SearchRow[] = [];
 		if (isBuildmons) {
-			abilitySet = [['header', `Skill`]];
+			abilitySet = [['header', "Skill"]];
 		} else {
-			abilitySet = [['header', TL`Abilities`]];
+			abilitySet = [['header', "Abilities"]];
 		}
 
 
@@ -1532,7 +1506,7 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 		}
 		if (isBuildmons) {
 			abilitySet.push(['ability', toID(species.abilities['skill'])]);
-			abilitySet.push(['header', `Perks`]);
+			abilitySet.push(['header', "Perks"]);
 			for (let i=0; i<6; i++) {
 				if (species.abilities[`${i}`]) {
 					abilitySet.push(['category', `<u>Level ${i+5}0</u>`]);
@@ -1545,11 +1519,11 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 				abilitySet.push(['ability', toID(species.abilities['1'])]);
 			}
 			if (species.abilities['H']) {
-				abilitySet.push(['header', TL`Hidden Ability`]);
+				abilitySet.push(['header', "Hidden Ability"]);
 				abilitySet.push(['ability', toID(species.abilities['H'])]);
 			}
 			if (species.abilities['S']) {
-				abilitySet.push(['header', TL`Special Event Ability`]);
+				abilitySet.push(['header', "Special Event Ability"]);
 				abilitySet.push(['ability', toID(species.abilities['S'])]);
 			}
 		}
@@ -1562,9 +1536,9 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 				abilities.push(ability.id);
 			}
 
-			let goodAbilities: SearchRow[] = [['header', TL`Abilities`]];
-			let poorAbilities: SearchRow[] = [['header', TL`Situational Abilities`]];
-			let badAbilities: SearchRow[] = [['header', TL`Unviable Abilities`]];
+			let goodAbilities: SearchRow[] = [['header', "Abilities"]];
+			let poorAbilities: SearchRow[] = [['header', "Situational Abilities"]];
+			let badAbilities: SearchRow[] = [['header', "Unviable Abilities"]];
 			for (const ability of abilities.sort().map(abil => dex.abilities.get(abil))) {
 				let rating = ability.rating;
 				if (ability.id === 'normalize') rating = 3;
@@ -1679,14 +1653,14 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 		}
 		if (speciesSpecific.length) {
 			return [
-				['header', TL`Specific to ${TL(this.dex.species.get(speciesName))}`],
+				['header', "Specific to " + speciesName],
 				...speciesSpecific,
 				...results,
 			];
 		}
 		if (abilitySpecific.length) {
 			return [
-				['header', TL`Specific to ${TL(this.dex.abilities.get(this.set!.ability!))}`],
+				['header', `Specific to ${this.set!.ability!}`],
 				...abilitySpecific,
 				...results,
 			];
@@ -1715,11 +1689,11 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 	}
 	getDefaultResults(): SearchRow[] {
 		let results: SearchRow[] = [];
-		results.push(['header', TL`Moves`]);
+		results.push(['header', "Moves"]);
 		for (let id in BattleMovedex) {
 			switch (id) {
 			case 'paleowave':
-				results.push(['header', TL`CAP moves`]);
+				results.push(['header', "CAP moves"]);
 				break;
 			case 'magikarpsrevenge':
 				continue;
@@ -2178,16 +2152,16 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		for (const id of moves) {
 			const isUsable = this.moveIsNotUseless(id as ID, species, moves, this.set);
 			if (isUsable) {
-				if (!usableMoves.length) usableMoves.push(['header', TL`Moves`]);
+				if (!usableMoves.length) usableMoves.push(['header', "Moves"]);
 				usableMoves.push(['move', id as ID]);
 			} else {
-				if (!uselessMoves.length) uselessMoves.push(['header', TL`Usually useless moves`]);
+				if (!uselessMoves.length) uselessMoves.push(['header', "Usually useless moves"]);
 				uselessMoves.push(['move', id as ID]);
 			}
 		}
 		if (sketchMoves.length) {
-			usableMoves.push(['header', TL`Sketched moves`]);
-			uselessMoves.push(['header', TL`Useless sketched moves`]);
+			usableMoves.push(['header', "Sketched moves"]);
+			uselessMoves.push(['header', "Useless sketched moves"]);
 		}
 		for (const id of sketchMoves) {
 			const isUsable = this.moveIsNotUseless(id as ID, species, sketchMoves, this.set);

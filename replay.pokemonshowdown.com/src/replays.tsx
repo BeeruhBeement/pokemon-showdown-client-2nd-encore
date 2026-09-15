@@ -3,7 +3,6 @@ import preact from '../../play.pokemonshowdown.com/js/lib/preact';
 import { Net, PSModel } from './utils';
 import { BattlePanel } from './replays-battle';
 import { SearchPanel } from './replays-index';
-import type { ID } from '../../play.pokemonshowdown.com/src/battle-dex';
 declare const Config: any;
 
 export const PSRouter = new class extends PSModel {
@@ -11,7 +10,7 @@ export const PSRouter = new class extends PSModel {
 	leftLoc: string | null = null;
 	rightLoc: string | null = null;
 	forceSinglePanel = false;
-	shortViewport = false;
+	stickyRight = true;
 	constructor() {
 		super();
 		const baseLocSlashIndex = document.location.href.lastIndexOf('/');
@@ -40,16 +39,15 @@ export const PSRouter = new class extends PSModel {
 	}
 	setSinglePanel(init?: boolean) {
 		const singlePanel = window.innerWidth < 1300;
-		const shortViewport = window.innerHeight <= 660;
-		if (this.forceSinglePanel !== singlePanel || this.shortViewport !== shortViewport) {
+		const stickyRight = (window.innerHeight > 614);
+		if (this.forceSinglePanel !== singlePanel || this.stickyRight !== stickyRight) {
 			this.forceSinglePanel = singlePanel;
-			this.shortViewport = shortViewport;
+			this.stickyRight = stickyRight;
 			if (!init) this.update();
 		}
 	}
 	push(href: string): boolean {
 		if (!href.startsWith(this.baseLoc)) return false;
-		if (href.includes('.json') || href.includes('.log') || href.includes('.inputlog')) return false;
 
 		if (this.go(href)) {
 			window.history?.pushState([this.leftLoc, this.rightLoc], '', href);
@@ -97,7 +95,6 @@ export const PSRouter = new class extends PSModel {
 
 export class PSReplays extends preact.Component {
 	static darkMode: 'dark' | 'light' | 'auto' = 'auto';
-	user: { id: ID, isLeader: boolean } | null = null;
 	static updateDarkMode() {
 		let dark = this.darkMode === 'dark' ? 'dark' : '';
 		if (this.darkMode === 'auto') {
@@ -125,21 +122,15 @@ export class PSReplays extends preact.Component {
 			const data = JSON.parse(response);
 			Object.assign(Config.customcolors, data);
 		});
-		if (!Net.defaultRoute) Net(`/api/replays/check-login`).get().then(result => {
-			if (!result.startsWith(']')) return;
-			const [userid, isLeader] = result.slice(1).split(',');
-			this.user = { id: userid as ID, isLeader: !!isLeader };
-			this.forceUpdate();
-		});
 	}
 	override render() {
-		const twoColumn = PSRouter.showingLeft() && PSRouter.showingRight();
-		const className = `bar-wrapper${twoColumn ? ' has-sidebar' : ''}${
-			twoColumn && PSRouter.shortViewport ? ' short-viewport' : ''
-		}`;
-		return <div class={className}>
-			{PSRouter.showingLeft() && <SearchPanel id={PSRouter.leftLoc!} user={this.user} />}
-			{PSRouter.showingRight() && <BattlePanel id={PSRouter.rightLoc!} user={this.user} />}
+		const position = PSRouter.showingLeft() && PSRouter.showingRight() && !PSRouter.stickyRight ?
+			{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' } : {};
+		return <div
+			class={'bar-wrapper' + (PSRouter.showingLeft() && PSRouter.showingRight() ? ' has-sidebar' : '')} style={position}
+		>
+			{PSRouter.showingLeft() && <SearchPanel id={PSRouter.leftLoc!} />}
+			{PSRouter.showingRight() && <BattlePanel id={PSRouter.rightLoc!} />}
 			<div style={{ clear: 'both' }}></div>
 		</div>;
 	}

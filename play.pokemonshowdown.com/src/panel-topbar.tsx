@@ -15,7 +15,6 @@ import {
 } from "./client-main";
 import { PSView } from "./panels";
 import type { Battle } from "./battle";
-import { Dex, TL } from "./battle-dex";
 import { BattleLog } from "./battle-log"; // optional
 
 window.addEventListener('dragover', e => {
@@ -24,16 +23,6 @@ window.addEventListener('dragover', e => {
 });
 
 export class PSHeader extends preact.Component {
-	faviconNotifying = false;
-	updateFavicon = () => {
-		const notifying = Object.values(PS.rooms).some(room => room?.notifications.length);
-		if (notifying === this.faviconNotifying) return;
-
-		const favicon = document.querySelector<HTMLLinkElement>('#dynamic-favicon');
-		if (!favicon) return;
-		favicon.href = `${Dex.resourcePrefix}${notifying ? 'favicon-notify.ico' : 'favicon.ico'}`;
-		this.faviconNotifying = notifying;
-	};
 	static toggleMute = (e: Event) => {
 		PS.prefs.set('mute', !PS.prefs.mute);
 		PS.update();
@@ -78,7 +67,7 @@ export class PSHeader extends preact.Component {
 	static roomInfo(room: PSRoom) {
 		const RoomType = PS.roomTypes[room.type];
 		let icon = RoomType?.icon || <i class="fa fa-file-text-o" aria-hidden></i>;
-		let title = room.getTitle();
+		let title = room.title;
 		switch (room.type) {
 		case 'battle':
 			const idChunks = room.id.split('-');
@@ -146,14 +135,14 @@ export class PSHeader extends preact.Component {
 
 		let closeButton = null;
 		if (closable) {
-			closeButton = <button class="closebutton" name="closeRoom" value={id} aria-label={TL`[Close]`}>
+			closeButton = <button class="closebutton" name="closeRoom" value={id} aria-label="Close">
 				<i class="fa fa-times-circle" aria-hidden></i>
 			</button>;
 		}
 		const aria: Record<string, string> = noAria ? {} : {
 			"role": "tab", "id": `roomtab-${id}`, "aria-selected": cur ? "true" : "false",
 		};
-		if (id === 'rooms') aria['aria-label'] = TL`[Join chat]`;
+		if (id === 'rooms') aria['aria-label'] = "Join chat";
 		return <li class={id === '' ? 'home-li' : ''} key={id}>
 			<a
 				class={className} href={`/${id}`} draggable={true} title={hoverTitle || undefined}
@@ -192,7 +181,7 @@ export class PSHeader extends preact.Component {
 
 		let userbarLeft = this.base.querySelector('div.userbar .icon.button')?.getBoundingClientRect()?.left;
 		if (userbarLeft) userbarLeft -= 5;
-		const plusTabRight = this.base.querySelector('a.roomtab[href="/rooms"]')?.getBoundingClientRect()?.right;
+		const plusTabRight = this.base.querySelector('a.roomtab[aria-label="Join chat"]')?.getBoundingClientRect()?.right;
 		const overflow = this.base.querySelector<HTMLElement>('.overflow');
 
 		if (!overflow || !userbarLeft || !plusTabRight) return;
@@ -216,21 +205,19 @@ export class PSHeader extends preact.Component {
 		});
 		window.addEventListener('resize', this.handleResize);
 		this.handleResize();
-		this.updateFavicon();
 	}
 	override componentDidUpdate() {
 		this.handleResize();
-		this.updateFavicon();
 	}
 	renderUser() {
 		if (!PS.connection?.connected) {
-			return <button class="button" disabled><em>{TL`Offline`}</em></button>;
+			return <button class="button" disabled><em>Offline</em></button>;
 		}
 		if (PS.user.initializing) {
-			return <button class="button" disabled><em>{TL`Connecting...`}</em></button>;
+			return <button class="button" disabled><em>Connecting...</em></button>;
 		}
 		if (!PS.user.named) {
-			return <a class="button" href="login">{TL`[Choose name]`}</a>;
+			return <a class="button" href="login">Choose name</a>;
 		}
 		const userColor = window.BattleLog && `color:${PS.user.away ? '#888' : BattleLog.usernameColor(PS.user.userid)}`;
 		return <span class="username" style={userColor}>
@@ -267,13 +254,10 @@ export class PSHeader extends preact.Component {
 			<div class="userbar">
 				{this.renderUser()} {}
 				<div style="float:right">
-					<button
-						class="icon button" data-href="volume" title={TL`[Sound]`} aria-label={TL`[Sound]`}
-						onDblClick={PSHeader.toggleMute}
-					>
+					<button class="icon button" data-href="volume" title="Sound" aria-label="Sound" onDblClick={PSHeader.toggleMute}>
 						<i class={PS.prefs.mute ? 'fa fa-volume-off' : 'fa fa-volume-up'}></i>
 					</button> {}
-					<button class="icon button" data-href="options" title={TL`[Options]`} aria-label={TL`[Options]`}>
+					<button class="icon button" data-href="options" title="Options" aria-label="Options">
 						<i class="fa fa-cog" aria-hidden></i>
 					</button>
 				</div>
@@ -291,13 +275,10 @@ export class PSHeader extends preact.Component {
 			{null /* vertical tabs */}
 			<div class="userbar">
 				{this.renderUser()} {}
-				<button
-					class="icon button" data-href="volume" title={TL`[Sound]`} aria-label={TL`[Sound]`}
-					onDblClick={PSHeader.toggleMute}
-				>
+				<button class="icon button" data-href="volume" title="Sound" aria-label="Sound" onDblClick={PSHeader.toggleMute}>
 					<i class={PS.prefs.mute ? 'fa fa-volume-off' : 'fa fa-volume-up'}></i>
 				</button> {}
-				<button class="icon button" data-href="options" title={TL`[Options]`} aria-label={TL`[Options]`}>
+				<button class="icon button" data-href="options" title="Options" aria-label="Options">
 					<i class="fa fa-cog" aria-hidden></i>
 				</button>
 			</div>
@@ -319,7 +300,7 @@ export class PSHeader extends preact.Component {
 				</ul>
 			</div></div></div>
 			<div class="overflow">
-				<button name="tablist" class="button" data-href="roomtablist" aria-label={TL`[All tabs]`} type="button">
+				<button name="tablist" class="button" data-href="roomtablist" aria-label="All tabs" type="button">
 					<i class="fa fa-caret-down" aria-hidden></i>
 				</button>
 			</div>
@@ -343,9 +324,12 @@ export class PSMiniHeader extends preact.Component {
 
 		if (PS.leftPanelWidth !== null) return null;
 
-		const notificationsCount = Object.values(PS.rooms).filter(
-			room => room !== PS.room && room?.notifications.length
-		).length;
+		let notificationsCount = 0;
+		const notificationRooms = [...PS.leftRoomList, ...PS.rightRoomList];
+		for (const roomid of notificationRooms) {
+			const miniNotifications = PS.rooms[roomid]?.notifications;
+			if (miniNotifications?.length) notificationsCount++;
+		}
 		const { icon, title } = PSHeader.roomInfo(PS.panel);
 		const userColor = window.BattleLog && `color:${PS.user.away ? '#888' : BattleLog.usernameColor(PS.user.userid)}`;
 		const showMenuButton = PSView.narrowMode;
@@ -355,21 +339,21 @@ export class PSMiniHeader extends preact.Component {
 		const menuButton = !showMenuButton ? (
 			null
 		) : !this.menuOpen ? (
-			<button onClick={PSView.scrollToHeader} class={`mini-header-left ${notifying}`} aria-label={TL`[Menu]`}>
+			<button onClick={PSView.scrollToHeader} class={`mini-header-left ${notifying}`} aria-label="Menu">
 				{!!notificationsCount && <div class="notification-badge">{notificationsCount}</div>}
 				<i class="fa fa-bars" aria-hidden></i>
 			</button>
 		) : (
-			<button onClick={PSView.scrollToRoom} class="mini-header-left" aria-label={TL`[Menu]`}>
+			<button onClick={PSView.scrollToRoom} class="mini-header-left" aria-label="Menu">
 				<i class="fa fa-arrow-right" aria-hidden></i>
 			</button>
 		);
 		return <div class="mini-header" style={`left:${PSView.verticalHeaderWidth + (PSView.narrowMode ? 0 : -1)}px;`}>
 			{menuButton}
-			<button data-href="options" class="mini-header-right" aria-label={TL`[Options]`}>
+			{icon} {title}
+			<button data-href="options" class="mini-header-right" aria-label="Options">
 				{PS.user.named ? <strong style={userColor}>{PS.user.name}</strong> : <i class="fa fa-cog" aria-hidden></i>}
 			</button>
-			{icon} {title}
 		</div>;
 	}
 }

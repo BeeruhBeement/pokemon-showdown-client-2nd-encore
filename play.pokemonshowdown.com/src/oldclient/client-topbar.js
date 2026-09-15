@@ -550,9 +550,8 @@
 				"Türkçe": 'turkish',
 				"हिंदी": 'hindi',
 				"日本語": 'japanese',
-				"한국어": 'korean',
 				"简体中文": 'simplifiedchinese',
-				"繁體中文": 'traditionalchinese'
+				"中文": 'traditionalchinese'
 			};
 			buf += '<p><label class="optlabel">Language: <select name="language" class="button">';
 			for (var name in possibleLanguages) {
@@ -632,14 +631,7 @@
 			Storage.prefs('tournaments', tournaments);
 		},
 		setLanguage: function (e) {
-			var language = e.currentTarget.value;
-			app.user.updateSetting('language', language);
-			Dex.loadTextData().then(function () {
-				for (var roomid in app.rooms) {
-					var battle = app.rooms[roomid] && app.rooms[roomid].battle;
-					if (battle) battle.resetToCurrentTurn();
-				}
-			});
+			app.user.updateSetting('language', e.currentTarget.value);
 		},
 		setBlockpms: function (e) {
 			app.user.updateSetting('blockPMs', !!e.currentTarget.checked);
