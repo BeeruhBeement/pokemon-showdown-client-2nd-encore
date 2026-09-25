@@ -752,13 +752,13 @@
 					checkboxes.push('<label class="megaevo"><input type="checkbox" name="dynamax" />&nbsp;Dynamax</label>');
 				}
 				if (canTerastallize) {
-					checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');
-					/*if (this.battle.mod.includes('buildmons')) {
+					console.log(this.battle.dex);
+					if (this.battle.dex.modid.includes('buildmons')) {
 						var abilityId = curActive.ability || switchables[pos].ability || '';
 						var abilityName = abilityId ? this.battle.dex.abilities.get(abilityId).name : '';
 						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Activate ' + BattleLog.escapeHTML(abilityName) + '</label>');
 					}
-					else checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');*/
+					else checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');
 				}
 				if (checkboxes.length) {
 					moveMenu += '<div class="megaevo-box">' + checkboxes.join('') + '</div>';
