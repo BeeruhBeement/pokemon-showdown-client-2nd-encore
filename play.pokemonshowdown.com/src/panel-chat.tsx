@@ -10,10 +10,10 @@ import type { PSSubscription } from "./client-core";
 import { PS, PSRoom, type RoomOptions, type RoomID, type Team, Config } from "./client-main";
 import { PSView, PSPanelWrapper, PSRoomPanel, ReconnectTimer } from "./panels";
 import { TeamForm } from "./panel-mainmenu";
-import { BattleLog } from "./battle-log";
+import { BattleLog, eHTML } from "./battle-log";
 import type { Battle } from "./battle";
 import { MiniEdit } from "./miniedit";
-import { Dex, PSUtils, toID, type ID } from "./battle-dex";
+import { Dex, PSUtils, TL, toID, type ID } from "./battle-dex";
 import { BattleTextParser, type Args } from "./battle-text-parser";
 import { PSLoginServer } from "./client-connection";
 import type { BattleRoom } from "./panel-battle";
@@ -50,6 +50,7 @@ export class ChatRoom extends PSRoom {
 	/** n.b. this will be null outside of battle rooms */
 	battle: Battle | null = null;
 	log: BattleLog | null = null;
+	connectError: string | null = null;
 	tour: ChatTournament | null = null;
 	lastMessage: Args | null = null;
 	lastViewedTime: number | null = null;
@@ -92,13 +93,14 @@ export class ChatRoom extends PSRoom {
 		}
 		return false;
 	}
-	override receiveLine(args: Args) {
+	override handleLine(args: Args): boolean {
+		if (super.handleLine(args)) return true;
 		switch (args[0]) {
 		case 'users':
 			const usernames = args[1].split(',');
 			const count = parseInt(usernames.shift()!, 10);
 			this.setUsers(count, usernames);
-			return;
+			return true;
 
 		case 'join': case 'j': case 'J':
 			this.addUser(args[1]);
@@ -119,34 +121,32 @@ export class ChatRoom extends PSRoom {
 		case 'tournament': case 'tournaments':
 			this.tour ||= new ChatTournament(this);
 			this.tour.receiveLine(args);
-			return;
+			return true;
 
 		case 'noinit':
-			if (this.battle && args[1] === 'joinfailed') {
-				this.receiveLine(['bigerror', args[2]]);
-				this.receiveLine(['html',
-					`<div class="broadcast-red pad"><p class="buttonbar"><button class="button" data-cmd="/close"><strong>Close</strong></button></p></div>`,
-				]);
+			if (this.connectMode === 'deleted') {
+				if (args[2]) this.connectError = args[2];
+			} else if (this.battle && args[1] === 'joinfailed') {
+				this.connectError = args[2] || 'Not found';
 			} else if (this.battle) {
 				// check the Replays database
 				(this as any as BattleRoom).loadReplay();
 			} else {
-				const message = args[2] ? BattleLog.escapeHTML(args[2]) : `Chatroom "${BattleLog.escapeHTML(this.title)}" not found`;
-				this.receiveLine(['html',
-					`<div class="broadcast-red pad"><h3>${message}</h3><p class="buttonbar"><button class="button" data-cmd="/close"><strong>Close</strong></button></p></div>`,
-				]);
+				this.connectError = args[2] || `Chatroom "${this.title}" not found`;
 			}
-			return;
+			this.update(null);
+			return true;
 		case 'expire':
 			this.connected = false;
-			this.connectMode = 'expired';
-			this.receiveLine(['', `This room has expired (you can't chat in it anymore)`]);
-			return;
+			this.connectMode = 'deleted';
+			this.connectError = args[1] || "This room has expired (you can't chat in it anymore)";
+			this.update(null);
+			return true;
 
 		case 'chat': case 'c':
 			if (`${args[2]} `.startsWith('/challenge ')) {
 				this.updateChallenge(args[1], args[2].slice(11));
-				return;
+				return true;
 			} else if (args[2].startsWith('/warn ')) {
 				const reason = args[2].replace('/warn ', '');
 				PS.join(`rules-warn` as RoomID, {
@@ -156,7 +156,7 @@ export class ChatRoom extends PSRoom {
 					},
 					parentElem: null,
 				});
-				return;
+				return true;
 			}
 			// falls through
 		case 'c:':
@@ -177,7 +177,7 @@ export class ChatRoom extends PSRoom {
 		// 	this.joinLeave = null;
 		// 	break;
 		}
-		super.receiveLine(args);
+		return false;
 	}
 	override handleReconnect(msg: string): boolean | void {
 		let lines = msg.split('\n');
@@ -213,9 +213,11 @@ export class ChatRoom extends PSRoom {
 
 		if (lines.length) {
 			const timestamp = BattleLog.renderTimestamp(cutOffTime, PS.prefs.timestamps?.chatrooms);
-			this.receiveLine([`raw`, `<div class="infobox">${timestamp}You disconnected.</div>`]);
-			for (const line of lines) this.receiveLine(BattleTextParser.parseLine(line));
-			this.receiveLine(BattleTextParser.parseLine(reconnectMessage));
+			this.receiveBatch([
+				[`raw`, `<div class="infobox">${timestamp}You disconnected.</div>`],
+				...lines.map(line => BattleTextParser.parseLine(line)),
+				BattleTextParser.parseLine(reconnectMessage),
+			]);
 		}
 		this.update(null);
 		return true;
@@ -239,7 +241,7 @@ export class ChatRoom extends PSRoom {
 			} else {
 				this.setUsers(2, [nameWithGroup, selfWithGroup]);
 			}
-			this.title = `[DM] ${nameWithGroup.trim()}`;
+			this.title = `[${TL`DM`}] ${nameWithGroup.trim()}`;
 		}
 	}
 	static getHighlight(message: string, roomid: string) {
@@ -282,11 +284,14 @@ export class ChatRoom extends PSRoom {
 			this.highlightRegExp[i] = new RegExp('(?:\\b|(?!\\w))(?:' + highlights[i].join('|') + ')(?:\\b|(?!\\w))', 'i');
 		}
 	}
-	static isHighlightableChatMessage(message: string) {
+	static isHighlightableChatMessage(message: string, isDM = false) {
 		if (!message.startsWith('/')) return true;
 		const [cmd] = PSUtils.splitFirst(message.slice(1), ' ');
 		if (['raw', 'nonotify', 'text', 'error'].includes(cmd)) {
 			return false;
+		}
+		if (['uhtml', 'uhtmlchange'].includes(cmd)) {
+			return isDM;
 		}
 		if (cmd === 'subtlenotify') {
 			return 'subtle';
@@ -333,7 +338,8 @@ export class ChatRoom extends PSRoom {
 		if (!message) return false;
 		if (userid === PS.user.userid) return false;
 
-		const highlightType = ChatRoom.isHighlightableChatMessage(message);
+		const isDM = this.id.startsWith("dm-");
+		const highlightType = ChatRoom.isHighlightableChatMessage(message, isDM);
 		const isIgnored = PS.prefs.ignore?.[userid];
 		if (isIgnored || !highlightType) return false;
 		if (highlightType === 'subtle') {
@@ -341,7 +347,7 @@ export class ChatRoom extends PSRoom {
 			return false;
 		}
 
-		if (this.id.startsWith("dm-")) {
+		if (isDM) {
 			this.notify({
 				title: `${this.title}`,
 				body: this.getChatNotificationBody(message),
@@ -374,7 +380,7 @@ export class ChatRoom extends PSRoom {
 				}
 				format = BattleLog.formatId(format || '');
 				PS.mainmenu.makeQuery('userdetails', targetUser).then(data => {
-					if (data.rooms === false) return this.errorReply('This player does not exist or is not online.');
+					if (data.rooms === false) return this.errorReply(TL`This player does not exist or is not online.`);
 					PS.join(`challenge-${toID(targetUser)}` as RoomID, { args: { format } });
 				});
 				return;
@@ -423,7 +429,7 @@ export class ChatRoom extends PSRoom {
 		},
 		'togglemessages'(target) {
 			if (this.pmTarget ||
-				this.type !== 'chat') return this.errorReply('This command can only be used in proper chat rooms.');
+				this.type !== 'chat') return this.errorReply(TL`This command can only be used in proper chat rooms.`);
 			if (this.log) {
 				const userid = toID(target);
 				const classStart = 'revealed chat chatmessage-' + userid;
@@ -483,7 +489,7 @@ export class ChatRoom extends PSRoom {
 			PSLoginServer.query("ladderget", {
 				user: targets[0],
 			}).then(data => {
-				if (!data || !Array.isArray(data)) return this.add(`|error|Error: corrupted ranking data`);
+				if (!data || !Array.isArray(data)) return this.errorReply(TL`Error: corrupted ranking data`);
 				let buffer = `<div class="ladder"><table><tr><td colspan="9">User: <strong>${toID(targets[0])}</strong></td></tr>`;
 				if (!data.length) {
 					buffer += '<tr><td colspan="9"><em>This user has not played any ladder games yet.</em></td></tr>';
@@ -499,7 +505,7 @@ export class ChatRoom extends PSRoom {
 				buffer += '</tr>';
 				const hiddenFormats = [];
 				for (const row of data) {
-					if (!row) return this.add(`|error|Error: corrupted ranking data`);
+					if (!row) return this.errorReply(TL`Error: corrupted ranking data`);
 					const formatId = toID(row.formatid);
 					const matchesTarget = (
 						formats[formatId] ||
@@ -516,7 +522,7 @@ export class ChatRoom extends PSRoom {
 					// Validate all the numerical data
 					for (const value of [row.elo, row.rpr, row.rprd, row.gxe, row.w, row.l, row.t]) {
 						if (typeof value !== 'number' && typeof value !== 'string') {
-							return this.add(`|error|Error: corrupted ranking data`);
+							return this.errorReply(TL`Error: corrupted ranking data`);
 						}
 					}
 
@@ -557,7 +563,7 @@ export class ChatRoom extends PSRoom {
 						if (formatTargeting) {
 							const formatsText = Object.keys(gens).concat(Object.keys(formats)).join(', ');
 							buffer += `<tr class="no-matches"><td colspan="8">` +
-								BattleLog.html`<em>This user has not played any ladder games that match ${formatsText}.</em></td></tr>`;
+								eHTML`<em>This user has not played any ladder games that match ${formatsText}.</em></td></tr>`;
 						} else {
 							buffer += `<tr class="no-matches"><td colspan="8"><em>This user has no notable ladder activity.</em></td></tr>`;
 						}
@@ -578,7 +584,7 @@ export class ChatRoom extends PSRoom {
 		// battle-specific commands
 		// ------------------------
 		'play'() {
-			if (!this.battle) return this.add('|error|You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			if (this.battle.atQueueEnd) {
 				if (this.battle.ended) this.battle.isReplay = true;
 				this.battle.reset();
@@ -587,17 +593,17 @@ export class ChatRoom extends PSRoom {
 			this.update(null);
 		},
 		'pause'() {
-			if (!this.battle) return this.add('|error|You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			this.battle.pause();
 			this.update(null);
 		},
 		'ffto,fastfowardto'(target, cmd, parentElem) {
-			if (!this.battle) return this.add('|error|You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			if (!target) {
-				PS.prompt("Turn number?", {
+				PS.prompt(TL`Turn number?`, {
 					defaultValue: `${this.battle.turn}`,
 					type: 'numeric',
-					okButton: 'Go',
+					okButton: TL`[Go]`,
 					parentElem,
 				}).then(turnNum => {
 					if (turnNum?.trim()) this.send(`/ffto ${turnNum}`, parentElem);
@@ -613,62 +619,66 @@ export class ChatRoom extends PSRoom {
 				turnNum = Infinity;
 			}
 			if (isNaN(turnNum)) {
-				this.errorReply(`Invalid turn number: ${target}`);
+				this.errorReply(TL`Invalid turn number: ${target}`);
 				return;
 			}
 			if (this.battle.hardcoreMode) {
-				this.errorReply(`Turn navigation is disabled in hardcore mode.`);
+				this.errorReply(TL`Turn navigation is disabled in hardcore mode.`);
 				return;
 			}
 			this.battle.seekTurn(turnNum);
 			this.update(null);
 		},
 		'switchsides'() {
-			if (!this.battle) return this.add('|error|You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			this.battle.switchViewpoint();
 		},
-		'cancel,undo'() {
+		'cancel,undo,cancelone'(_target, cmd) {
 			if (!this.battle) return this.send('/cancelchallenge');
 
 			const room = this as any as BattleRoom;
 			if (!room.choices || !room.request) {
-				this.receiveLine([`error`, `/choose - You are not a player in this battle`]);
+				this.errorReply('/choose - ' + TL`You are not a player in this battle`);
 				return;
 			}
 			if (room.choices.isDone() || room.choices.isEmpty()) {
 				// we _could_ check choices.noCancel, but the server will check anyway
 				this.sendDirect('/undo');
 			}
-			room.choices = new BattleChoiceBuilder(room.request);
+			if (cmd === 'cancel') {
+				room.choices = new BattleChoiceBuilder(room.request);
+			} else {
+				room.choices = room.choices.previous();
+			}
+			room.updateChoiceNotification();
 			this.update(null);
 		},
 		'move,switch,team,pass,shift,choose'(target, cmd) {
-			if (!this.battle) return this.errorReply('You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			const room = this as any as BattleRoom;
-			if (!room.choices) {
-				this.receiveLine([`error`, `/choose - You are not a player in this battle`]);
+			if (!room.choices || !room.request) {
+				this.errorReply('/choose - ' + TL`You are not a player in this battle`);
 				return;
 			}
+
+			const choices = cmd === 'choose' ? new BattleChoiceBuilder(room.request) : room.choices;
 			if (cmd !== 'choose') target = `${cmd} ${target}`;
-			if (target === 'choose auto' || target === 'choose default') {
-				this.sendDirect('/choose default');
-				room.overlayActive = null;
-				this.update(null);
-				return;
-			}
-			const possibleError = room.choices.addChoice(target);
+			const possibleError = choices.addChoices(target);
 			if (possibleError) {
 				this.errorReply(possibleError);
 				return;
 			}
-			if (room.choices.isDone()) {
-				this.sendDirect(`/choose ${room.choices.toString()}`);
+
+			room.choices = choices;
+			if (choices.isDone()) {
+				this.sendDirect(`/choose ${choices.toString()}`);
 			}
+			room.updateChoiceNotification();
 			room.overlayActive = null;
 			this.update(null);
 		},
 		'movemenu,switchmenu'(target, cmd) {
-			if (!this.battle) return this.errorReply('You are not in a battle');
+			if (!this.battle) return this.errorReply(TL`You are not in a battle`);
 			const room = this as any as BattleRoom;
 			if (!target && cmd === 'movemenu') {
 				room.overlayActive = (room.overlayActive === 'move' ? null : 'move');
@@ -685,7 +695,7 @@ export class ChatRoom extends PSRoom {
 	});
 	openChallenge() {
 		if (!this.pmTarget) {
-			this.add(`|error|Can only be used in a PM.`);
+			this.errorReply(TL`Can only be used in a DM.`);
 			return;
 		}
 		this.challengeMenuOpen = true;
@@ -693,7 +703,7 @@ export class ChatRoom extends PSRoom {
 	}
 	cancelChallenge() {
 		if (!this.pmTarget) {
-			this.add(`|error|Can only be used in a PM.`);
+			this.errorReply(TL`Can only be used in a DM.`);
 			return;
 		}
 		if ((this.teamSent && this.challengeMenuOpen) || this.challenging) {
@@ -842,9 +852,9 @@ export class ChatRoom extends PSRoom {
 			this.joinLeave[action].push(formattedName);
 		}
 
-		let message = this.formatJoinLeave(this.joinLeave['join'], 'joined');
-		if (this.joinLeave['join'].length && this.joinLeave['leave'].length) message += '; ';
-		message += this.formatJoinLeave(this.joinLeave['leave'], 'left');
+		const joinedMessage = this.formatJoinLeave(this.joinLeave['join'], 'joined');
+		const leftMessage = this.formatJoinLeave(this.joinLeave['leave'], 'left');
+		const message = joinedMessage && leftMessage ? TL`${joinedMessage}; ${leftMessage}` : joinedMessage || leftMessage;
 
 		this.add(`|uhtml|${this.joinLeave.messageId}|<small class="gray">${message}</small>`);
 	}
@@ -901,9 +911,9 @@ export class CopyableURLBox extends preact.Component<{ url: string }> {
 				name="url" type="text" class="textbox" readOnly size={45} value={this.props.url}
 				style="field-sizing:content"
 			/> {}
-			<button class="button" onClick={this.copy}>Copy</button> {}
+			<button class="button" onClick={this.copy}>{TL`[Copy]`}</button> {}
 			<a href={this.props.url} target="_blank" class="no-panel-intercept">
-				<button class="button">Visit</button>
+				<button class="button">{TL`[Visit]`}</button>
 			</a>
 		</div>;
 	}
@@ -967,6 +977,7 @@ export class ChatTextEntry extends preact.Component<{
 			this.subscription.unsubscribe();
 			this.subscription = null;
 		}
+		this.miniedit?.destroy();
 	}
 	focusIfNoSelection = (e: Event) => {
 		if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
@@ -1301,7 +1312,7 @@ export class ChatTextEntry extends preact.Component<{
 				/>}
 			</form>
 			{!canTalk && <button data-href="login" class="button autofocus">
-				Choose a name before sending messages
+				{TL`[Choose a name before sending messages]`}
 			</button>}
 		</div>;
 	}
@@ -1353,7 +1364,7 @@ class ChatPanel extends PSRoomPanel<ChatRoom> {
 		const now = Date.now();
 		const lastChallenged = PS.mainmenu.lastChallenged || 0;
 		if (now - lastChallenged < 5_000) {
-			PS.alert(`Please wait 5 seconds before challenging again.`, {
+			PS.alert(TL`Please wait 5 seconds before challenging again.`, {
 				parentElem: elem,
 			});
 			return;
@@ -1380,6 +1391,7 @@ class ChatPanel extends PSRoomPanel<ChatRoom> {
 	};
 	renderControls() {
 		const room = this.props.room;
+		const connectError = this.renderConnectError();
 
 		const defaultFormat = room.args?.format as string | undefined;
 		if (defaultFormat?.startsWith('!!')) {
@@ -1393,20 +1405,20 @@ class ChatPanel extends PSRoomPanel<ChatRoom> {
 				format={room.challenging.formatName} teamFormat={room.challenging.teamFormat}
 				onSubmit={null} selectType="challenge"
 			>
-				<button data-cmd="/cancelchallenge" class="button">Cancel</button>
+				<button data-cmd="/cancelchallenge" class="button">{TL`[Cancel]`}</button>
 			</TeamForm>
 		</div> : room.challengeMenuOpen ? <div class="challenge outgoing">
 			<TeamForm onSubmit={this.makeChallenge} defaultFormat={defaultFormat} selectType="challenge">
 				{challengeSent && <button class="button" disabled>
-					Challenging...
+					{TL`Challenging...`}
 				</button>}
 				{!challengeSent && <button type="submit" class="button button-first" disabled={!!room.challenged}>
-					<strong>Challenge</strong>
+					<strong>{TL`[Challenge]`}</strong>
 				</button>}
-				{!challengeSent && <button data-href="battleoptions" class="button button-last" aria-label="Battle options">
+				{!challengeSent && <button data-href="battleoptions" class="button button-last" aria-label={TL`[Battle options]`}>
 					<i class="fa fa-caret-down" aria-hidden></i>
 				</button>} {}
-				<button data-cmd="/cancelchallenge" class="button">Cancel</button>
+				<button data-cmd="/cancelchallenge" class="button">{TL`[Cancel]`}</button>
 			</TeamForm>
 		</div> : null;
 
@@ -1417,32 +1429,43 @@ class ChatPanel extends PSRoomPanel<ChatRoom> {
 				onSubmit={this.acceptChallenge} selectType="challenge"
 			>
 				{room.teamSent && <button class="button" disabled>
-					Accepting...
+					{TL`Accepting...`}
 				</button>}
 				{!room.teamSent && <button
 					type="submit" class={room.challenged.formatName ? `button button-first` : `button`}
 					data-cmdpreview="/accept"
 				>
-					<strong>{room.challenged.acceptButtonLabel || 'Accept'}</strong>
+					<strong>{room.challenged.acceptButtonLabel || TL`[Accept]`}</strong>
 				</button>}
 				{!room.teamSent && room.challenged.formatName && <button
-					data-href="battleoptions" class="button button-last" aria-label="Battle options"
+					data-href="battleoptions" class="button button-last" aria-label={TL`[Battle options]`}
 				>
 					<i class="fa fa-caret-down" aria-hidden></i>
 				</button>} {}
-				<button data-cmd="/reject" class="button">{room.challenged.rejectButtonLabel || 'Reject'}</button>
+				<button data-cmd="/reject" class="button">{room.challenged.rejectButtonLabel || TL`[Reject]`}</button>
 			</TeamForm>
 		</div> : null;
 
-		if (!challengeTo && !challengeFrom && !PS.isOffline) return null;
+		if (!challengeTo && !challengeFrom && !PS.isOffline && !connectError) return null;
 		return <>
+			{connectError}
 			{challengeTo}{challengeFrom}{PS.isOffline && <p class="buttonbar">
 				<button class="button" data-cmd="/reconnect">
-					<i class="fa fa-plug" aria-hidden></i> <strong>Reconnect</strong>
+					<i class="fa fa-plug" aria-hidden></i> <strong>{TL`[Reconnect]`}</strong>
 				</button> {}
 				<ReconnectTimer />
 			</p>}
 		</>;
+	}
+	renderConnectError() {
+		const room = this.props.room;
+		if (room.connectMode !== 'deleted' && room.connectMode !== 'not-found') {
+			return null;
+		}
+		return <div class="pad"><div class="broadcast-red pad">
+			<h3>{room.connectError || "Error"}</h3>
+			<p class="buttonbar"><button class="button" data-cmd="/close"><strong>{TL`[Close]`}</strong></button></p>
+		</div></div>;
 	}
 
 	override render() {
@@ -1472,28 +1495,29 @@ export class ChatUserList extends preact.Component<{
 	override render() {
 		const room = this.props.room;
 		const pmTargetid = room.pmTarget ? toID(room.pmTarget) : null;
+		const userCountText = room.userCount === 1 ? TL`${room.userCount} user` : TL`${room.userCount} users`;
 		return <div
 			class={'userlist' + (this.props.minimized ? ' userlist-hidden' : this.props.static ? ' userlist-static' : '')}
 			style={{ left: this.props.left || 0, top: this.props.top || 0 }}
 		>
 			{!this.props.minimized ? (
-				<div class="userlist-count"><small>{room.userCount} users</small></div>
+				<div class="userlist-count"><small>{userCountText}</small></div>
 			) : room.id === 'dm-' ? (
 				<>
-					<button class="button button-middle" data-cmd="/help">Commands</button>
+					<button class="button button-middle" data-cmd="/help">{TL`[Commands]`}</button>
 				</>
 			) : pmTargetid ? (
 				<>
-					<button class="button button-middle" data-cmd="/challenge">Challenge</button>
+					<button class="button button-middle" data-cmd="/challenge">{TL`[Challenge]`}</button>
 					<button class="button button-middle" data-href={`useroptions-${pmTargetid}`}>{'\u2026'}</button>
 				</>
 			) : room.battle ? (
 				<>
-					<button data-href="userlist" class="button button-middle">{room.userCount} users</button>
-					<button data-href="battleoptions" class="button button-middle">Battle options</button>
+					<button data-href="userlist" class="button button-middle">{userCountText}</button>
+					<button data-href="battleoptions" class="button button-middle">{TL`[Battle options]`}</button>
 				</>
 			) : (
-				<button data-href="userlist" class="button button-middle">{room.userCount} users</button>
+				<button data-href="userlist" class="button button-middle">{userCountText}</button>
 			)}
 			<ul>
 				{room.onlineUsers.map(([userid, name]) => {
@@ -1588,7 +1612,7 @@ export class ChatLog extends preact.Component<{
 	}
 	override render() {
 		return <div
-			class={this.props.class} role="log" aria-label="Chat log"
+			class={this.props.class} role="log" aria-label={TL`Chat log`}
 			style={{ left: this.props.left || 0, top: this.props.top || 0, bottom: this.props.bottom ?? 40 }}
 		>
 			<ChatLogInner class="inner message-log" />
@@ -1619,8 +1643,8 @@ export class PSTextarea extends preact.Component<{
 		const textboxTest = this.base!.querySelector<HTMLTextAreaElement>('textarea.heighttester')!;
 		textboxTest.style.width = `${textbox.offsetWidth}px`;
 		textboxTest.value = textbox.value;
-		const newHeight = Math.max(textboxTest.scrollHeight + 40, 50);
-		textbox.style.height = `${newHeight}px`;
+		// +2 for the borders
+		textbox.style.height = `${textboxTest.scrollHeight + 2}px`;
 	};
 	handleInput = (e: Event) => {
 		if (this.props.singleLine) {
@@ -1662,7 +1686,7 @@ export class PSTextarea extends preact.Component<{
 			/>
 			{!this.cssAutosize && <div><textarea
 				class={`${className} heighttester`}
-				style="visibility:hidden;position:absolute;left:-200px"
+				style="visibility:hidden;position:absolute;left:-200px;height:10px;overflow-y:hidden"
 			/></div>}
 		</div>;
 	}
