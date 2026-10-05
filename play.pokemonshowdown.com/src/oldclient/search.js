@@ -305,7 +305,24 @@
 		if (!pokemon) return '<li class="result">Unrecognized pokemon</li>';
 		var id = toID(pokemon.name);
 		if (Search.urlRoot) attrs += ' href="' + Search.urlRoot + 'pokemon/' + id + '" data-target="push"';
-		var buf = '<li class="result"><a' + attrs + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">';
+		if (this.engine && this.engine.dex.modid === 'gen9wordmons') {
+			let rarityColour = '';
+
+			if (pokemon.eggGroups.includes('Common')) {
+				rarityColour = ' style="background: rgba(255, 255, 255, 0.2);"';
+			} else if (pokemon.eggGroups.includes('Uncommon')) {
+				rarityColour = ' style="background: rgba(30, 255, 0, 0.2);"';
+			} else if (pokemon.eggGroups.includes('Rare')) {
+				rarityColour = ' style="background: rgba(0, 112, 221, 0.2);"';
+			} else if (pokemon.eggGroups.includes('Epic')) {
+				rarityColour = ' style="background: rgba(163, 53, 238, 0.2);"';
+			} else if (pokemon.eggGroups.includes('Legendary')) {
+				rarityColour = ' style="background: rgba(255, 128, 0, 0.2);"';
+			}
+
+			var buf = '<li class="result"><a' + attrs + rarityColour + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">';
+		}
+		else { var buf = '<li class="result"><a' + attrs + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">'; }
 
 		// number
 		var tier = this.engine ? this.engine.getTier(pokemon) : pokemon.num;

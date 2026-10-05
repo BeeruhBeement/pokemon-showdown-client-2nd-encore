@@ -506,27 +506,6 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 					if (species.tier === 'Illegal') return Dex.mod('gen9').species.get(species.id).natDexTier;
 					return species.tier;
 				}
-				if (isPuffyPink) {
-					return Dex.mod('gen3puffypink').species.get(species.id).tier;
-				}
-				if (isAltermons) {
-					return Dex.mod('gen9altermons').species.get(species.id).tier;
-				}
-				if (isIronFist) {
-					return Dex.mod('gen9ironfist').species.get(species.id).tier;
-				}
-				if (isTypeShift) {
-					return Dex.mod('gen9typeshift').species.get(species.id).tier;
-				}
-				if (isPTest) {
-					return Dex.mod('gen9ptest').species.get(species.id).tier;
-				}
-				if (isWordmons) {
-					return Dex.mod('gen9wordmons').species.get(species.id).tier;
-				}
-				if (isBuildmons) {
-					return Dex.mod('gen9buildmons').species.get(species.id).tier;
-				}
 				return species.tier;
 			})();
 			overrideTier[species.id] = speciesTier;
