@@ -1451,7 +1451,7 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 				if (species.types[0] !== value && species.types[1] !== value) return false;
 				break;
 			case 'egggroup':
-				if (species.eggGroups[0] !== value && species.eggGroups[1] !== value) return false;
+				if (!species.eggGroups.includes(value)) return false;
 				break;
 			case 'tier':
 				if (this.getTier(species) !== value) return false;
@@ -1519,25 +1519,89 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 		const dex = this.dex;
 		let species = dex.species.get(this.species);
 		let abilitySet: SearchRow[] = [];
-		if (isBuildmons) {
-			abilitySet = [['header', "Skill"]];
-		} else {
-			abilitySet = [['header', TL`Abilities`]];
-		}
+		if (!isBuildmons) abilitySet = [['header', TL`Abilities`]];
 
 		if (species.isMega) {
 			abilitySet.unshift(['html', `Will be <strong>${species.abilities['0']}</strong> after Mega Evolving.`]);
 			species = dex.species.get(species.baseSpecies);
 		}
 		if (isBuildmons) {
-			abilitySet.push(['ability', toID(species.abilities['skill'])]);
+			const buildmonsAbilities: Record<string, string | undefined> = {};
+			for (const [key, ability] of Object.entries(species.abilities)) {
+				buildmonsAbilities[key] = ability;
+			}
+			abilitySet.push(['header', "Skill"]);
+			abilitySet.push(['ability', toID(buildmonsAbilities.skill)]);
+
 			abilitySet.push(['header', "Perks"]);
-			for (let i=0; i<6; i++) {
-				if (species.abilities[`${i}`]) {
-					abilitySet.push(['category', `<u>Level ${i+5}0</u>`]);
-					abilitySet.push(['ability', toID(species.abilities[`${i}`])]);
+
+			const storedPerks = this.set?.perks || [];
+			const requestedAbilities: Record<string, true> = {};
+			for (const perk of storedPerks) {
+				const abilityName = buildmonsAbilities[perk];
+				if (abilityName) requestedAbilities[toID(abilityName)] = true;
+			}
+
+			const selectedAbilities: Record<string, true> = {};
+			let spentPoints = 0;
+			for (let row = 0; row < 6; row++) {
+				for (let col = 0; col < 3; col++) {
+					const abilityName = buildmonsAbilities[`tree${col}${row}`];
+					if (!abilityName) continue;
+					const ability = toID(abilityName);
+					const previousAbility = buildmonsAbilities[`tree${col}${row - 1}`];
+					const unlocked = row === 0 || !!previousAbility && !!selectedAbilities[toID(previousAbility)];
+					if (!unlocked || !requestedAbilities[ability] || selectedAbilities[ability]) continue;
+					const rating = dex.abilities.get(ability).rating;
+					const cost = Math.max(0, rating === undefined ? 1 : rating);
+					if (spentPoints + cost > 12 + 1e-9) continue;
+					selectedAbilities[ability] = true;
+					spentPoints += cost;
 				}
 			}
+			abilitySet.push(['html', `<div class="buildmons-skill-points">Perk Points: ${spentPoints}/12</div>`]);
+
+			abilitySet.push(['html', `<div class="buildmons-skill-row">${[0, 1, 2].map(col => {
+				const treeName = species.eggGroups[col] || `${col + 1}`;
+				const treeColor = ['red', 'green', 'blue'][col];
+				return `<div class="buildmons-skill-tree-heading buildmons-tree-${treeColor}">${treeName}</div>`;
+			}).join('')}</div>`]);
+
+			// 6 rows
+			for (let row = 0; row < 6; row++) {
+				let rowHTML = `<div class="buildmons-skill-row">`;
+
+				// 3 columns
+				for (let col = 0; col < 3; col++) {
+					const treeKey = `tree${col}${row}`;
+					const abilityName = buildmonsAbilities[treeKey];
+
+					if (!abilityName) continue;
+
+					const ability = toID(abilityName);
+					const abilityData = dex.abilities.get(ability);
+					const selected = !!selectedAbilities[ability];
+					const previousAbility = buildmonsAbilities[`tree${col}${row - 1}`];
+					const unlocked = row === 0 || !!previousAbility && !!selectedAbilities[toID(previousAbility)];
+					const rating = abilityData.rating;
+					const cost = Math.max(0, rating === undefined ? 1 : rating);
+					const locked = !selected && (!unlocked || spentPoints + cost > 12 + 1e-9);
+					const treeColor = ['red', 'green', 'blue'][col];
+					const classes = ['buildmons-skill-button', `buildmons-tree-${treeColor}`];
+					if (row === 0) classes.push('buildmons-tree-top');
+					if (row === 5) classes.push('buildmons-tree-bottom');
+					if (selected) classes.push('selected');
+					if (locked) classes.push('locked');
+
+					const costLabel = cost === 1 ? '1 point' : `${cost} points`;
+					rowHTML += `<button type="button" class="${classes.join(' ')}" data-buildmons-ability="${ability}" data-buildmons-perk="${treeKey}" aria-pressed="${selected ? 'true' : 'false'}" aria-disabled="${locked ? 'true' : 'false'}" title="Cost: ${costLabel}">${abilityData.name} <small>${costLabel}</small></button> `;
+				}
+
+				rowHTML += `</div>`;
+
+				abilitySet.push(['html', rowHTML]);
+			}
+			abilitySet.push(['html', `<div class="buildmons-skill-description"> Click to select. Hover for description. </div>`]);
 		} else {
 			abilitySet.push(['ability', toID(species.abilities['0'])]);
 			if (species.abilities['1']) {

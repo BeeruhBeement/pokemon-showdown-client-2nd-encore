@@ -3246,3 +3246,122 @@ p.or:after {
 .dark iframe.textbox:focus {
 	background: #DDDDDD;
 }
+
+
+
+
+
+.buildmons-skill-row {
+	display: flex;
+}
+
+.buildmons-skill-tree-heading {
+	box-sizing: border-box;
+	flex: 1 1 0;
+	min-width: 0;
+	margin: 3px auto;
+	padding: 4px;
+	border: 1px solid;
+	color: #fff;
+	font-weight: bold;
+	text-align: center;
+}
+
+.buildmons-tree-red {
+	border-color: #e74c3c;
+	background-color: rgba(231, 76, 60, 0.22);
+}
+
+.buildmons-tree-green {
+	border-color: #2ecc71;
+	background-color: rgba(46, 204, 113, 0.22);
+}
+
+.buildmons-tree-blue {
+	border-color: #3498db;
+	background-color: rgba(52, 152, 219, 0.22);
+}
+
+.buildmons-skill-button {
+	box-sizing: border-box;
+	flex: 1 1 0;
+	min-width: 0;
+	min-height: 48px;
+	margin: 3px auto;
+	padding: 4px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: #202020;
+	color: #ddd;
+	text-align: center;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	line-height: 1.2;
+}
+
+.buildmons-skill-button.buildmons-tree-red,
+.buildmons-skill-button.buildmons-tree-green,
+.buildmons-skill-button.buildmons-tree-blue {
+	border-width: 1px;
+}
+
+.buildmons-skill-button.buildmons-tree-red {
+	background-color: rgba(231, 76, 60, 0.22);
+}
+
+.buildmons-skill-button.buildmons-tree-green {
+	background-color: rgba(46, 204, 113, 0.22);
+}
+
+.buildmons-skill-button.buildmons-tree-blue {
+	background-color: rgba(52, 152, 219, 0.22);
+}
+
+.buildmons-skill-button:hover {
+	background: #e6be8a;
+	border-color: #ad895c;
+	color: #ffffff;
+}
+
+.buildmons-skill-button.selected {
+	background: rgba(225, 169, 95, 0.5);
+	border-color: #e5aa70;
+	color: #ffffff;
+}
+
+.buildmons-skill-button.locked {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+.buildmons-skill-points {
+	margin: 4px 0;
+	color: #ddd;
+	font-weight: bold;
+}
+
+.buildmons-skill-description {
+	box-sizing: border-box;
+	width: 100%;
+	min-height: 48px;
+	margin: 6px 0;
+	padding: 10px 12px;
+	border: 1px solid #555;
+	border-radius: 4px;
+	background: #202020;
+	color: #ddd;
+	line-height: 1.4;
+	white-space: normal;
+}
+
+.utilichart .result.buildmons-skill-description-row {
+	height: auto;
+	contain: none;
+}
+
+.utilichart .result.buildmons-skill-row-result {
+	height: auto;
+	contain: none;
+}

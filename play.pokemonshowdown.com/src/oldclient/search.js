@@ -53,6 +53,14 @@
 			self.sortCol = self.engine.sortCol;
 			self.find('');
 		});
+		this.$el.on('mouseover', '[data-buildmons-ability]', function (e) {
+			if (!self.engine.dex.modid.includes('buildmons')) return;
+			var ability = self.engine.dex.abilities.get(e.currentTarget.dataset.buildmonsAbility);
+			var description = self.$el.find('.buildmons-skill-description').text(ability.desc || ability.shortDesc);
+			var row = description.closest('li');
+			var list = row.closest('.utilichart');
+			list.height(Math.max(self.resultSet.length * 33, row[0].offsetTop + row.outerHeight()));
+		});
 	}
 
 	Search.prototype.$ = function (query) {
@@ -198,7 +206,10 @@
 		// errorMessage = '<span class="col illegalcol"><em>' + errorMessage + '</em></span>';
 		switch (type) {
 		case 'html':
-			return '<li class="result">' + id + '</li>';
+			var classes = 'result';
+			if (id.includes('buildmons-skill-description')) classes += ' buildmons-skill-description-row';
+			if (id.includes('buildmons-skill-row')) classes += ' buildmons-skill-row-result';
+			return '<li class="' + classes + '">' + id + '</li>';
 		case 'header':
 			return '<li class="result"><h3>' + id + '</h3></li>';
 		case 'sortpokemon':
@@ -305,28 +316,29 @@
 		if (!pokemon) return '<li class="result">Unrecognized pokemon</li>';
 		var id = toID(pokemon.name);
 		if (Search.urlRoot) attrs += ' href="' + Search.urlRoot + 'pokemon/' + id + '" data-target="push"';
-		if (this.engine && this.engine.dex.modid === 'gen9wordmons') {
-			let rarityColour = '';
 
-			if (pokemon.eggGroups.includes('Common')) {
-				rarityColour = ' style="background: rgba(255, 255, 255, 0.2);"';
-			} else if (pokemon.eggGroups.includes('Uncommon')) {
-				rarityColour = ' style="background: rgba(30, 255, 0, 0.2);"';
-			} else if (pokemon.eggGroups.includes('Rare')) {
-				rarityColour = ' style="background: rgba(0, 112, 221, 0.2);"';
-			} else if (pokemon.eggGroups.includes('Epic')) {
-				rarityColour = ' style="background: rgba(163, 53, 238, 0.2);"';
-			} else if (pokemon.eggGroups.includes('Legendary')) {
-				rarityColour = ' style="background: rgba(255, 128, 0, 0.2);"';
+		var styleAttr = '';
+		if (this.engine && this.engine.dex.modid === 'gen9wordmons' && pokemon.eggGroups) {
+			var rarityColors = {
+				'Common': 'rgba(255, 255, 255, 0.2)',
+				'Uncommon': 'rgba(30, 255, 0, 0.2)',
+				'Rare': 'rgba(0, 112, 221, 0.2)',
+				'Epic': 'rgba(163, 53, 238, 0.2)',
+				'Legendary': 'rgba(255, 128, 0, 0.2)'
+			};
+
+			for (var rarity in rarityColors) {
+				if (pokemon.eggGroups.includes(rarity)) {
+					styleAttr = ' class="rarity-colored" style="background: ' + rarityColors[rarity] + ';"';
+					break;
+				}
 			}
-
-			var buf = '<li class="result"><a' + attrs + rarityColour + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">';
 		}
-		else { var buf = '<li class="result"><a' + attrs + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">'; }
+
+		var buf = '<li class="result"><a' + attrs + styleAttr + ' data-entry="pokemon|' + BattleLog.escapeHTML(pokemon.name) + '">';
 
 		// number
 		var tier = this.engine ? this.engine.getTier(pokemon) : pokemon.num;
-		// buf += '<span class="col numcol">' + (pokemon.num >= 0 ? pokemon.num : 'CAP') + '</span> ';
 		buf += '<span class="col numcol">' + tier + '</span> ';
 
 		// icon
@@ -351,6 +363,9 @@
 			} else {
 				name += '<small>' + pokemon.name.substr(tagStart) + '</small>';
 			}
+		}
+		if (this.engine.dex.modid.includes('buildmons') && pokemon.color) {
+			name += '<small> the ' + BattleLog.escapeHTML(pokemon.color) + '</small>';
 		}
 		buf += '<span class="col pokemonnamecol">' + name + '</span> ';
 
@@ -534,7 +549,8 @@
 		if (!ability) return '<li class="result">Unrecognized ability</li>';
 		var id = toID(ability.name);
 		if (Search.urlRoot) attrs += ' href="' + Search.urlRoot + 'abilities/' + id + '" data-target="push"';
-		var buf = '<li class="result"><a' + attrs + ' data-entry="ability|' + BattleLog.escapeHTML(ability.name) + '">';
+		var buildmonsAttr = this.engine.dex.modid.includes('buildmons') ? ' data-buildmons-ability="' + id + '"' : '';
+		var buf = '<li class="result"><a' + attrs + buildmonsAttr + ' data-entry="ability|' + BattleLog.escapeHTML(ability.name) + '">';
 
 		// name
 		var name = ability.name;

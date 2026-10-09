@@ -15,6 +15,8 @@ export declare namespace Teams {
 		item?: string;
 		/** Defaults to no ability (error in Gen 3+) */
 		ability?: string;
+		/** Buildmons perk tree slots selected for this set */
+		perks?: string[];
 		moves: string[];
 		/** Defaults to no nature (error in Gen 3+) */
 		nature?: Dex.NatureName;
@@ -116,12 +118,13 @@ export const Teams = new class {
 			buf += `|${set.happiness !== undefined && set.happiness !== 255 ? set.happiness : ''}`;
 
 			if (set.pokeball || set.hpType || set.gigantamax ||
-				(set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType) {
+				(set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined) {
 				buf += `,${set.hpType || ''}`;
 				buf += `,${this.packName(set.pokeball || '')}`;
 				buf += `,${set.gigantamax ? 'G' : ''}`;
 				buf += `,${set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10 ? set.dynamaxLevel : ''}`;
 				buf += `,${set.teraType || ''}`;
+				buf += `,${set.perks?.join(',') || ''}`;
 			}
 		}
 
@@ -249,9 +252,9 @@ export const Teams = new class {
 			j = buf.indexOf(']', i);
 			let misc;
 			if (j < 0) {
-				if (i < buf.length) misc = buf.substring(i).split(',', 6);
+				if (i < buf.length) misc = buf.substring(i).split(',');
 			} else {
-				if (i !== j) misc = buf.substring(i, j).split(',', 6);
+				if (i !== j) misc = buf.substring(i, j).split(',');
 			}
 			if (misc) {
 				set.happiness = (misc[0] ? Number(misc[0]) : undefined);
@@ -260,6 +263,9 @@ export const Teams = new class {
 				set.gigantamax = !!misc[3] || undefined;
 				set.dynamaxLevel = (misc[4] ? Number(misc[4]) : undefined);
 				set.teraType = misc[5] || undefined;
+				if (misc.length >= 7) {
+					set.perks = misc.slice(6).filter(perk => /^tree[0-2][0-5]$/.test(perk));
+				}
 			}
 			i = j + 1;
 			if (j < 0 || i <= lastI) break;
@@ -395,6 +401,9 @@ export const Teams = new class {
 		if (set.teraType) {
 			text += `Tera Type: ${set.teraType}\n`;
 		}
+		if (set.perks !== undefined) {
+			text += `Perks: ${set.perks.join(', ') || 'None'}\n`;
+		}
 
 		if (!newFormat) {
 			for (let move of set.moves || []) {
@@ -487,6 +496,9 @@ export const Teams = new class {
 			set.gigantamax = true;
 		} else if (line.startsWith('Tera Type: ')) {
 			set.teraType = line.slice(11);
+		} else if (line.startsWith('Perks: ')) {
+			set.perks = line.slice(7).toLowerCase() === 'none' ? [] :
+				line.slice(7).split(',').map(perk => perk.trim()).filter(perk => /^tree[0-2][0-5]$/.test(perk));
 		} else if (line.startsWith('EVs: ')) {
 			const evLines = line.slice(5).split('(')[0].split('/');
 			set.evs = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 };

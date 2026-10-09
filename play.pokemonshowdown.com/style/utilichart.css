@@ -374,3 +374,11 @@
 .utilichart .ppsortcol {
 	width: 23px;
 }
+
+
+
+
+
+.utilichart a.rarity-colored .typecol img {
+	opacity: 1;
+}

@@ -68,6 +68,7 @@
 
 			// teambuilder events
 			'click .utilichart a': 'chartClick',
+			'click .utilichart .buildmons-skill-button': 'chartSkillClick',
 			'keydown .chartinput': 'chartKeydown',
 			'keyup .chartinput': 'chartKeyup',
 			'focus .chartinput': 'chartFocus',
@@ -3347,6 +3348,80 @@
 			}
 			this.chartSet(val, true);
 		},
+		chartSkillClick: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+			if (!this.curSet || !this.curTeam.format.includes('buildmons')) return;
+
+			var perk = e.currentTarget.dataset.buildmonsPerk;
+			var match = /^tree([0-2])([0-5])$/.exec(perk);
+			if (!match) return;
+
+			var tree = Number(match[1]);
+			var level = Number(match[2]);
+			var species = this.curTeam.dex.species.get(this.curSet.species);
+			var dex = this.curTeam.dex;
+			var abilityID = toID(species.abilities[perk]);
+			var ownedAbilities = {};
+			(this.curSet.perks || []).forEach(function (key) {
+				if (species.abilities[key]) ownedAbilities[toID(species.abilities[key])] = true;
+			});
+
+			function getReachableAbilities(owned) {
+				var reachable = {};
+				var spentPoints = 0;
+				var changed = true;
+				while (changed) {
+					changed = false;
+					for (var rowIndex = 0; rowIndex < 6; rowIndex++) {
+						for (var treeIndex = 0; treeIndex < 3; treeIndex++) {
+							var currentAbility = species.abilities['tree' + treeIndex + rowIndex];
+							var previousAbility = species.abilities['tree' + treeIndex + (rowIndex - 1)];
+							var currentID = toID(currentAbility);
+							if (currentAbility && owned[currentID] &&
+								(!rowIndex || previousAbility && reachable[toID(previousAbility)]) && !reachable[currentID]) {
+								var rating = dex.abilities.get(currentID).rating;
+								var cost = Math.max(0, rating === undefined ? 1 : rating);
+								if (spentPoints + cost > 12 + 1e-9) continue;
+								reachable[currentID] = true;
+								spentPoints += cost;
+								changed = true;
+							}
+						}
+					}
+				}
+				return reachable;
+			}
+
+			var reachableAbilities = getReachableAbilities(ownedAbilities);
+			if (ownedAbilities[abilityID]) {
+				delete ownedAbilities[abilityID];
+			} else {
+				var previousAbility = species.abilities['tree' + tree + (level - 1)];
+				var spentPoints = Object.keys(reachableAbilities).reduce(function (total, ability) {
+					var rating = this.curTeam.dex.abilities.get(ability).rating;
+					return total + Math.max(0, rating === undefined ? 1 : rating);
+				}.bind(this), 0);
+				var newRating = this.curTeam.dex.abilities.get(abilityID).rating;
+				var newCost = Math.max(0, newRating === undefined ? 1 : newRating);
+				if ((level && (!previousAbility || !reachableAbilities[toID(previousAbility)])) ||
+					spentPoints + newCost > 12 + 1e-9) return;
+				ownedAbilities[abilityID] = true;
+			}
+
+			var normalizedAbilities = getReachableAbilities(ownedAbilities);
+			var normalizedPerks = [];
+			for (var treeIndex = 0; treeIndex < 3; treeIndex++) {
+				for (var rowIndex = 0; rowIndex < 6; rowIndex++) {
+					var key = 'tree' + treeIndex + rowIndex;
+					var abilityName = species.abilities[key];
+					if (abilityName && normalizedAbilities[toID(abilityName)]) normalizedPerks.push(key);
+				}
+			}
+			this.curSet.perks = normalizedPerks;
+			this.save();
+			this.updateChart(true);
+		},
 		chartKeydown: function (e) {
 			var modifier = (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey || e.cmdKey);
 			if (e.keyCode === 13 || (e.keyCode === 9 && !modifier)) { // enter/tab
@@ -3839,8 +3914,13 @@
 			} else {
 				set.item = '';
 			}
-			if (baseFormat.includes('buildmons')) set.ability = species.abilities['skill'];
-			else set.ability = species.abilities['0'];
+			if (baseFormat.includes('buildmons')) {
+				set.ability = species.abilities['skill'];
+				set.perks = [];
+			} else {
+				set.ability = species.abilities['0'];
+				delete set.perks;
+			}
 
 			set.moves = [];
 			set.evs = {};

@@ -866,12 +866,13 @@ Storage.packTeam = function (team) {
 			buf += '|';
 		}
 
-		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax || (set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType) {
+		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax || (set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined) {
 			buf += ',' + (set.hpType || '');
 			buf += ',' + toID(set.pokeball);
 			buf += ',' + (set.gigantamax ? 'G' : '');
 			buf += ',' + (set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10 ? set.dynamaxLevel : '');
 			buf += ',' + (set.teraType || '');
+			buf += ',' + (set.perks || []).join(',');
 		}
 	}
 
@@ -981,9 +982,9 @@ Storage.fastUnpackTeam = function (buf) {
 		j = buf.indexOf(']', i);
 		var misc = undefined;
 		if (j < 0) {
-			if (i < buf.length) misc = buf.substring(i).split(',', 6);
+			if (i < buf.length) misc = buf.substring(i).split(',');
 		} else {
-			if (i !== j) misc = buf.substring(i, j).split(',', 6);
+			if (i !== j) misc = buf.substring(i, j).split(',');
 		}
 		if (misc) {
 			set.happiness = (misc[0] ? Number(misc[0]) : 255);
@@ -992,6 +993,9 @@ Storage.fastUnpackTeam = function (buf) {
 			set.gigantamax = !!misc[3];
 			set.dynamaxLevel = (misc[4] ? Number(misc[4]) : 10);
 			set.teraType = misc[5];
+			if (misc.length >= 7) {
+				set.perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
+			}
 		}
 		if (j < 0) break;
 		i = j + 1;
@@ -1104,9 +1108,9 @@ Storage.unpackTeam = function (buf) {
 		j = buf.indexOf(']', i);
 		var misc = undefined;
 		if (j < 0) {
-			if (i < buf.length) misc = buf.substring(i).split(',', 6);
+			if (i < buf.length) misc = buf.substring(i).split(',');
 		} else {
-			if (i !== j) misc = buf.substring(i, j).split(',', 6);
+			if (i !== j) misc = buf.substring(i, j).split(',');
 		}
 		if (misc) {
 			set.happiness = (misc[0] ? Number(misc[0]) : 255);
@@ -1115,6 +1119,9 @@ Storage.unpackTeam = function (buf) {
 			set.gigantamax = !!misc[3];
 			set.dynamaxLevel = (misc[4] ? Number(misc[4]) : 10);
 			set.teraType = misc[5];
+			if (misc.length >= 7) {
+				set.perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
+			}
 		}
 		if (j < 0 || buf.indexOf('|', j) < 0) break;
 		i = j + 1;
@@ -1297,6 +1304,11 @@ Storage.importTeam = function (buffer, teams) {
 		} else if (line.substr(0, 11) === 'Tera Type: ') {
 			line = line.substr(11);
 			curSet.teraType = line;
+		} else if (line.substr(0, 7) === 'Perks: ') {
+			line = line.substr(7);
+			curSet.perks = line.toLowerCase() === 'none' ? [] : line.split(',').map(function (perk) {
+				return $.trim(perk);
+			}).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
 		} else if (line.substr(0, 15) === 'Dynamax Level: ') {
 			line = line.substr(15);
 			curSet.dynamaxLevel = +line;
@@ -1429,6 +1441,9 @@ Storage.exportTeam = function (team, hidestats) {
 		}
 		if (curSet.teraType) {
 			text += 'Tera Type: ' + curSet.teraType + '  \n';
+		}
+		if (curSet.perks !== undefined) {
+			text += 'Perks: ' + (curSet.perks.join(', ') || 'None') + '  \n';
 		}
 		if (!hidestats) {
 			var first = true;
