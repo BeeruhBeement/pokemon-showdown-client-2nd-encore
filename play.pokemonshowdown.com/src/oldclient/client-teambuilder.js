@@ -1374,6 +1374,7 @@
 
 			if (this.curTeam.format.includes('buildmons')) {
 				[2, 3, 4].forEach(function(index) {
+					if (!set.moves) return;
 					var moveItem = set.moves[index] ? this.curTeam.dex.items.get(set.moves[index]) : null;
 					buf += '<span class="itemicon" data-slot="' + index + '" style="' + (moveItem ? Dex.getItemIcon(moveItem) : '') + '"></span>';
 				}, this);
