@@ -87,6 +87,14 @@ export class BattleFormat implements FormatData {
 		if (this.gen === 7 && this.isLetsGo) this.mod = 'gen7letsgo' as ID;
 		if (this.gen === 8 && this.isBDSP) this.mod = 'gen8bdsp' as ID;
 		if (this.gen === 9 && this.isChampions) this.mod = 'champions' as ID;
+		if (this.gen === 9 && id.includes('hellskitchen')) this.mod = 'gen9hellskitchen' as ID;
+		if (this.gen === 3 && id.includes('puffypink')) this.mod = 'gen3puffypink' as ID;
+		if (this.gen === 9 && id.includes('altermons')) this.mod = 'gen9altermons' as ID;
+		if (this.gen === 9 && id.includes('ironfist')) this.mod = 'gen9ironfist' as ID;
+		if (this.gen === 9 && id.includes('typeshift')) this.mod = 'gen9typeshift' as ID;
+		if (this.gen === 9 && id.includes('ptest')) this.mod = 'gen9ptest' as ID;
+		if (this.gen === 9 && id.includes('wordmons')) this.mod = 'gen9wordmons' as ID;
+		if (this.gen === 9 && id.includes('buildmons')) this.mod = 'gen9buildmons' as ID;
 		if (id.includes('almostanyability') || id.includes('aaa')) this.abilityLegality = 'hackmons';
 		if (id.includes('hackmons') || id.includes('bh')) {
 			this.formeLegality = 'hackmons';
