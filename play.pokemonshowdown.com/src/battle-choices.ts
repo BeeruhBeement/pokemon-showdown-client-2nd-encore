@@ -26,6 +26,7 @@ export interface BattleRequestAllyInfo {
 	pokemon: ServerPokemon[];
 }
 export interface BattleRequestActivePokemon {
+	ppBudget?: number;
 	moves: {
 		name: string,
 		id: ID,

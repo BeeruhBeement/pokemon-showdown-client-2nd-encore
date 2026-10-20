@@ -1795,6 +1795,21 @@ p.or:after {
 .status.frz {
 	background: #009AA4;
 }
+.status.rad {
+	background: #92A600;
+}
+.status.wet {
+	background: #2878A8;
+}
+.status.ptr {
+	background: #8B6B3D;
+}
+.status.bld {
+	background: #8B0000;
+}
+.status.cor {
+	background: #596B42;
+}
 
 .movebutton {
 	float: left;
@@ -3252,14 +3267,19 @@ p.or:after {
 
 
 .buildmons-skill-row {
-	display: flex;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.buildmons-skill-empty {
+	min-height: 48px;
+	margin: 3px 0;
 }
 
 .buildmons-skill-tree-heading {
 	box-sizing: border-box;
-	flex: 1 1 0;
 	min-width: 0;
-	margin: 3px auto;
+	margin: 3px 0;
 	padding: 4px;
 	border: 1px solid;
 	color: #fff;
@@ -3284,10 +3304,10 @@ p.or:after {
 
 .buildmons-skill-button {
 	box-sizing: border-box;
-	flex: 1 1 0;
+	width: 100%;
 	min-width: 0;
 	min-height: 48px;
-	margin: 3px auto;
+	margin: 3px 0;
 	padding: 4px;
 	display: flex;
 	flex-direction: column;

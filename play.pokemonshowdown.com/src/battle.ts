@@ -2261,6 +2261,26 @@ export class Battle {
 				this.scene.resultAnim(poke, 'Frozen', 'frz');
 				this.scene.runStatusAnim('frz' as ID, [poke]);
 				break;
+			case 'rad':
+				this.scene.resultAnim(poke, 'Irradiated', 'rad');
+				this.scene.updateStatbar(poke);
+				break;
+			case 'wet':
+				this.scene.resultAnim(poke, 'Wet', 'wet');
+				this.scene.updateStatbar(poke);
+				break;
+			case 'ptr':
+				this.scene.resultAnim(poke, 'Petrified', 'ptr');
+				this.scene.updateStatbar(poke);
+				break;
+			case 'bld':
+				this.scene.resultAnim(poke, 'Bleeding', 'bld');
+				this.scene.updateStatbar(poke);
+				break;
+			case 'cor':
+				this.scene.resultAnim(poke, 'Corroded', 'cor');
+				this.scene.updateStatbar(poke);
+				break;
 			default:
 				this.scene.updateStatbar(poke);
 				break;
@@ -3356,7 +3376,10 @@ export class Battle {
 		// status parse
 		if (!status) {
 			output.status = '';
-		} else if (status === 'par' || status === 'brn' || status === 'slp' || status === 'frz' || status === 'tox') {
+		} else if (
+			status === 'par' || status === 'brn' || status === 'slp' || status === 'frz' || status === 'tox' ||
+			status === 'rad' || status === 'wet' || status === 'ptr' || status === 'bld' || status === 'cor'
+		) {
 			output.status = status;
 		} else if (status === 'psn' && output.status !== 'tox') {
 			output.status = status;

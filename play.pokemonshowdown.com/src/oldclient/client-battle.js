@@ -560,12 +560,19 @@
 
 			var moveTarget = this.choice ? this.choice.moveTarget : '';
 			var pos = this.choice.choices.length;
-			if (type === 'movetarget') pos--;
+			if (type === 'movetarget' && !this.choice.buildmonsTargeting) pos--;
 
 			var hpRatio = switchables[pos].hp / switchables[pos].maxhp;
 
 			var curActive = this.request && this.request.active && this.request.active[pos];
 			if (!curActive) return;
+			var isBuildmonsPP = typeof curActive.ppBudget === 'number';
+			var buildmonsMoves = this.choice.buildmonsMoves || [];
+			var buildmonsPPCost = 0;
+			for (var i = 0; i < buildmonsMoves.length; i++) {
+				var queuedMove = curActive.moves[buildmonsMoves[i].move - 1];
+				if (queuedMove) buildmonsPPCost += queuedMove.maxpp || 1;
+			}
 			var trapped = curActive.trapped;
 			var canMegaEvo = curActive.canMegaEvo || switchables[pos].canMegaEvo;
 			var canMegaEvoX = curActive.canMegaEvoX || switchables[pos].canMegaEvoX;
@@ -594,8 +601,8 @@
 			}
 
 			var requestTitle = '';
-			if (type === 'move2' || type === 'movetarget') {
-				requestTitle += '<button name="clearChoice">Back</button> ';
+			if ((type === 'move2' || type === 'movetarget') && (!isBuildmonsPP || this.choice.buildmonsTargeting)) {
+				requestTitle += '<button name="' + (this.choice.buildmonsTargeting ? 'cancelBuildmonsTarget' : 'clearChoice') + '">Back</button> ';
 			}
 
 			// Target selector
@@ -664,6 +671,9 @@
 				// Move chooser
 				var hpBar = '<small class="' + (hpRatio < 0.2 ? 'critical' : hpRatio < 0.5 ? 'weak' : 'healthy') + '">HP ' + switchables[pos].hp + '/' + switchables[pos].maxhp + '</small>';
 				requestTitle += ' What will <strong>' + BattleLog.escapeHTML(switchables[pos].name) + '</strong> do? ' + hpBar;
+				if (isBuildmonsPP) {
+					requestTitle += ' <small>PP remaining: ' + (curActive.ppBudget - buildmonsPPCost) + '/' + curActive.ppBudget + '</small>';
+				}
 
 				var hasMoves = false;
 				var moveMenu = '';
@@ -675,16 +685,17 @@
 					var moveData = curActive.moves[i];
 					var move = this.battle.dex.moves.get(moveData.move);
 					var name = move.name;
-					var pp = moveData.pp + '/' + moveData.maxpp;
-					if (!moveData.maxpp) pp = '&ndash;';
-					if (move.id === 'Struggle' || move.id === 'Recharge') pp = '&ndash;';
+					var moveCost = isBuildmonsPP ? (moveData.maxpp || 1) : (Dex.moves.get(moveData.id).pp || 1);
+					var pp = isBuildmonsPP ? 'Cost ' + moveCost : moveData.pp + '/' + moveData.maxpp;
+					if (!isBuildmonsPP && !moveData.maxpp) pp = '&ndash;';
+					if (!isBuildmonsPP && (move.id === 'Struggle' || move.id === 'Recharge')) pp = '&ndash;';
 					if (move.id === 'Recharge') move.type = '&ndash;';
 					if (name.substr(0, 12) === 'Hidden Power') name = 'Hidden Power';
 					var moveTypeText = this.tooltips.getMoveTypeText(move, typeValueTracker);
 					var moveType = moveTypeText[0];
 					var moveEffectiveness = moveTypeText[1];
 					var tooltipArgs = 'move|' + moveData.move + '|' + pos;
-					if (moveData.disabled) {
+					if (moveData.disabled || isBuildmonsPP && buildmonsPPCost + moveCost > curActive.ppBudget) {
 						movebuttons += '<button disabled class="movebutton has-tooltip" data-tooltip="' + BattleLog.escapeHTML(tooltipArgs) + '">';
 					} else {
 						movebuttons += '<button class="movebutton type-' + moveType + ' has-tooltip" name="chooseMove" value="' + (i + 1) + '" data-move="' + BattleLog.escapeHTML(moveData.move) + '" data-target="' + BattleLog.escapeHTML(moveData.target) + '" data-tooltip="' + BattleLog.escapeHTML(tooltipArgs) + '">';
@@ -693,7 +704,11 @@
 					movebuttons += name + '<br /><small class="type">' + (moveType ? Dex.types.get(moveType).name : "Unknown") + ' <span class="effectiveness-icon">' + moveEffectiveness + '</span></small> <small class="pp">' + pp + '</small>&nbsp;</button> ';
 				}
 				if (!hasMoves) {
-					moveMenu += '<button class="movebutton" name="chooseMove" value="0" data-move="Struggle" data-target="randomNormal">Struggle<br /><small class="type">Normal</small> <small class="pp">&ndash;</small>&nbsp;</button> ';
+					if (isBuildmonsPP) {
+						moveMenu += movebuttons + '<em>No moves fit the remaining PP budget.</em>';
+					} else {
+						moveMenu += '<button class="movebutton" name="chooseMove" value="0" data-move="Struggle" data-target="randomNormal">Struggle<br /><small class="type">Normal</small> <small class="pp">&ndash;</small>&nbsp;</button> ';
+					}
 				} else {
 					if (canZMove || canDynamax || currentlyDynamaxed) {
 						var classType = canZMove ? 'z' : 'max';
@@ -757,11 +772,22 @@
 						var abilityId = curActive.ability || switchables[pos].ability || '';
 						var abilityName = abilityId ? this.battle.dex.abilities.get(abilityId).name : '';
 						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Activate ' + BattleLog.escapeHTML(abilityName) + '</label>');
+					} else {
+						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');
 					}
-					else checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');
 				}
 				if (checkboxes.length) {
 					moveMenu += '<div class="megaevo-box">' + checkboxes.join('') + '</div>';
+				}
+				if (isBuildmonsPP) {
+					if (buildmonsMoves.length) {
+						moveMenu += '<div class="buildmons-move-queue"><strong>Queued:</strong> ' + buildmonsMoves.map(function (queued) {
+							var queuedData = curActive.moves[queued.move - 1];
+							return BattleLog.escapeHTML(queuedData ? queuedData.move : '');
+						}).join(' &rarr; ') + '</div>';
+						moveMenu += '<button name="undoBuildmonsMove">Undo last move</button> ';
+						moveMenu += '<button name="finishBuildmonsMoves">Done</button>';
+					}
 				}
 				if (this.finalDecisionMove) {
 					moveMenu += '<em class="movewarning">You <strong>might</strong> have some moves disabled, so you won\'t be able to cancel an attack!</em>';
@@ -1302,6 +1328,30 @@
 				var choosableTargets = { normal: 1, any: 1, adjacentAlly: 1, adjacentAllyOrSelf: 1, adjacentFoe: 1 };
 				if (this.battle.gameType === 'freeforall') delete choosableTargets['adjacentAllyOrSelf'];
 
+				var activeData = this.request.active[this.choice.choices.length];
+				if (activeData && typeof activeData.ppBudget === 'number') {
+					var queuedMoves = this.choice.buildmonsMoves || (this.choice.buildmonsMoves = []);
+					var event = '';
+					if (!queuedMoves.length) {
+						event = isMega ? 'mega' : isMegaX ? 'megax' : isMegaY ? 'megay' :
+							isZMove ? 'zmove' : isUltraBurst ? 'ultra' : isDynamax ? 'dynamax' :
+							isTerastal ? 'terastallize' : '';
+					}
+					var queued = { move: parseInt(pos, 10), targetLoc: 0, event: event };
+					if (nearActive.length > 1 && target in choosableTargets) {
+						this.choice.buildmonsPendingMove = queued;
+						this.choice.buildmonsTargeting = true;
+						this.choice.type = 'movetarget';
+						this.choice.moveTarget = target;
+						this.updateControlsForPlayer();
+						return false;
+					}
+					queuedMoves.push(queued);
+					this.choice.type = 'move2';
+					this.updateControlsForPlayer();
+					return false;
+				}
+
 				this.choice.choices.push('move ' + pos + (isMega ? ' mega' : '') + (isMegaX ? ' megax' : isMegaY ? ' megay' : '') + (isZMove ? ' zmove' : '') + (isUltraBurst ? ' ultra' : '') + (isDynamax ? ' dynamax' : '') + (isTerastal ? ' terastallize' : ''));
 				if (nearActive.length > 1 && target in choosableTargets) {
 					this.choice.type = 'movetarget';
@@ -1314,12 +1364,42 @@
 			this.endChoice();
 		},
 		chooseMoveTarget: function (posString) {
+			if (this.choice.buildmonsPendingMove) {
+				this.choice.buildmonsPendingMove.targetLoc = parseInt(posString, 10);
+				this.choice.buildmonsMoves.push(this.choice.buildmonsPendingMove);
+				delete this.choice.buildmonsPendingMove;
+				delete this.choice.buildmonsTargeting;
+				this.choice.type = 'move2';
+				this.updateControlsForPlayer();
+				return false;
+			}
 			this.choice.choices[this.choice.choices.length - 1] += ' ' + posString;
 			this.chooseMove();
+		},
+		cancelBuildmonsTarget: function () {
+			delete this.choice.buildmonsPendingMove;
+			delete this.choice.buildmonsTargeting;
+			this.choice.type = 'move2';
+			this.updateControlsForPlayer();
+		},
+		undoBuildmonsMove: function () {
+			if (this.choice.buildmonsMoves) this.choice.buildmonsMoves.pop();
+			this.choice.type = 'move2';
+			this.updateControlsForPlayer();
+		},
+		finishBuildmonsMoves: function () {
+			if (!this.choice.buildmonsMoves || !this.choice.buildmonsMoves.length) return;
+			var moveChoices = this.choice.buildmonsMoves.map(function (queued) {
+				return queued.move + (queued.targetLoc ? ' ' + queued.targetLoc : '') + (queued.event ? ' ' + queued.event : '');
+			});
+			this.choice.choices.push('moves ' + moveChoices.join(';'));
+			delete this.choice.buildmonsMoves;
+			this.endChoice();
 		},
 		chooseFight: function () {
 			if (!this.choice) return;
 			this.tooltips.hideTooltip();
+			this.clearBuildmonsMoveQueue();
 
 			// TODO?: change this action
 			this.choice.choices.push('testfight');
@@ -1328,6 +1408,7 @@
 		chooseShift: function () {
 			if (!this.choice) return;
 			this.tooltips.hideTooltip();
+			this.clearBuildmonsMoveQueue();
 
 			this.choice.choices.push('shift');
 			this.endChoice();
@@ -1335,6 +1416,7 @@
 		chooseSwitch: function (pos) {
 			if (!this.choice) return;
 			this.tooltips.hideTooltip();
+			this.clearBuildmonsMoveQueue();
 
 			if (this.battle.myPokemon[this.choice.choices.length].reviving) {
 				this.choice.choices.push('switch ' + (parseInt(pos, 10) + 1));
@@ -1367,6 +1449,11 @@
 			}
 
 			this.endTurn();
+		},
+		clearBuildmonsMoveQueue: function () {
+			delete this.choice.buildmonsMoves;
+			delete this.choice.buildmonsPendingMove;
+			delete this.choice.buildmonsTargeting;
 		},
 		chooseSwitchTarget: function (posString) {
 			var slotSwitchIn = 0; // one-based
@@ -1446,7 +1533,9 @@
 				var requestDetails = this.request && this.request.side ? this.battle.myPokemon : [];
 				while (
 					choices.length < this.battle.pokemonControlled &&
-					(!nearActive[choices.length] || requestDetails[choices.length].commanding)
+					(!nearActive[choices.length] || !requestDetails[choices.length] ||
+						nearActive[choices.length].fainted || requestDetails[choices.length].fainted ||
+						requestDetails[choices.length].commanding)
 				) {
 					choices.push('pass');
 				}

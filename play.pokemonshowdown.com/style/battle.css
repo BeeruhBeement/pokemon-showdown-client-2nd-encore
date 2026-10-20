@@ -250,7 +250,12 @@ License: GPLv2
 .statbar span.psn,
 .statbar span.slp,
 .statbar span.par,
-.statbar span.frz {
+.statbar span.frz,
+.statbar span.rad,
+.statbar span.wet,
+.statbar span.ptr,
+.statbar span.bld,
+.statbar span.cor {
 	padding: 1px 2px;
 	border: 0;
 	border-radius: 3px;
@@ -273,6 +278,26 @@ License: GPLv2
 }
 .statbar span.frz {
 	background: #009AA4;
+	color: #FFFFFF;
+}
+.statbar span.rad {
+	background: #92A600;
+	color: #FFFFFF;
+}
+.statbar span.wet {
+	background: #2878A8;
+	color: #FFFFFF;
+}
+.statbar span.ptr {
+	background: #8B6B3D;
+	color: #FFFFFF;
+}
+.statbar span.bld {
+	background: #8B0000;
+	color: #FFFFFF;
+}
+.statbar span.cor {
+	background: #596B42;
 	color: #FFFFFF;
 }
 .statbar span.bad {

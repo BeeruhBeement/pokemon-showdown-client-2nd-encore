@@ -2851,6 +2851,16 @@ export class PokemonSprite extends Sprite {
 			status += '<span class="psn">PSN</span> ';
 		} else if (pokemon.status === 'tox') {
 			status += '<span class="psn">TOX</span> ';
+		} else if (pokemon.status === 'rad') {
+			status += '<span class="rad">RAD</span> ';
+		} else if (pokemon.status === 'wet') {
+			status += '<span class="wet">WET</span> ';
+		} else if (pokemon.status === 'ptr') {
+			status += '<span class="ptr">PTR</span> ';
+		} else if (pokemon.status === 'bld') {
+			status += '<span class="bld">BLD</span> ';
+		} else if (pokemon.status === 'cor') {
+			status += '<span class="cor">COR</span> ';
 		} else if (pokemon.status === 'slp') {
 			status += '<span class="slp">SLP</span> ';
 		} else if (pokemon.status === 'par') {

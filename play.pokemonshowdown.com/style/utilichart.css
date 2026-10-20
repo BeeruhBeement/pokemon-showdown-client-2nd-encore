@@ -191,6 +191,9 @@
 	font-size: 10pt;
 	white-space: nowrap;
 }
+.utilichart .pokemonnamecol.buildmons-pokemonnamecol {
+	width: 213px;
+}
 .utilichart .shortpokemonnamecol {
 	padding-top: 6px;
 	height: 23px;
@@ -381,4 +384,11 @@
 
 .utilichart a.rarity-colored .typecol img {
 	opacity: 1;
+}
+
+.utilichart .pnamesortcol.buildmons-pnamesortcol {
+	width: 213px;
+}
+.utilichart .abilitysortcol.buildmons-abilitysortcol {
+	width: 86px;
 }

@@ -2022,6 +2022,21 @@ pre.textbox.textbox-empty[placeholder]:before {
 .status.frz {
 	background: #009AA4;
 }
+.status.rad {
+	background: #92A600;
+}
+.status.wet {
+	background: #2878A8;
+}
+.status.ptr {
+	background: #8B6B3D;
+}
+.status.bld {
+	background: #8B0000;
+}
+.status.cor {
+	background: #596B42;
+}
 
 .has-tooltip {
 	-webkit-touch-callout: none;

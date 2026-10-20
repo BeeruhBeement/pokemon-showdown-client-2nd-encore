@@ -954,7 +954,7 @@ export class BattleTooltips {
 			if (pokemon.terastallized) {
 				const baseTypes = `<span class="textaligned-typeicons">${this.getPokemonTypes(pokemon, true).map(type => Dex.getTypeIcon(type)).join(' ')}</span>`;
 				text += `&nbsp; &nbsp; <small>${TL`(base: ${baseTypes})`}</small>`;
-			} else if (knownPokemon.teraType) {
+			} else if (knownPokemon.teraType && !this.battle.dex.modid.includes('buildmons')) {
 				const teraType = `<span class="textaligned-typeicons">${Dex.getTypeIcon(knownPokemon.teraType)}</span>`;
 				const teraTypeText = TL`Tera ${teraType}`;
 				text += `&nbsp; &nbsp; <small>(${teraTypeText})</small>`;
@@ -968,7 +968,13 @@ export class BattleTooltips {
 
 		const hpName = TL.stat.hp || 'HP';
 		const faintedName = TL.status.fnt || 'fainted';
-		const statusName = pokemon.status ? TL.status[pokemon.status] || pokemon.status.toUpperCase() : '';
+		const customStatusName = pokemon.status === 'rad' ? 'Irradiated' :
+			pokemon.status === 'wet' ? 'Wet' :
+			pokemon.status === 'ptr' ? 'Petrified' :
+			pokemon.status === 'bld' ? 'Bleeding' :
+			pokemon.status === 'cor' ? 'Corroded' : '';
+		const statusName = pokemon.status ?
+			TL.status[pokemon.status] || customStatusName || pokemon.status.toUpperCase() : '';
 		const status = pokemon.status ?
 			` <span class="status ${pokemon.status}">${statusName}</span>` : '';
 		if (pokemon.fainted && pokemon.maxhp === 100) {
@@ -1007,11 +1013,19 @@ export class BattleTooltips {
 
 		const supportsAbilities = this.battle.gen > 2 && !this.battle.tier.includes("Let's Go");
 
+		const isBuildmons = this.battle.dex.modid.includes('buildmons');
 		let abilityText = '';
-		if (supportsAbilities) {
+		if (supportsAbilities && !(isBuildmons && isActive)) {
 			abilityText = this.getPokemonAbilityText(
 				clientPokemon, serverPokemon, isActive, !!illusionIndex && illusionIndex > 1
 			);
+		}
+		if (isBuildmons && isActive && clientPokemon) {
+			const volatiles = Object.keys(clientPokemon.volatiles).map(volatile => {
+				const effect = Dex.getEffect(volatile);
+				return BattleLog.escapeHTML(effect.name || volatile);
+			});
+			text += `<p><small>Volatiles:</small> ${volatiles.length ? volatiles.join(', ') : 'None'}</p>`;
 		}
 
 		let itemText = '';
@@ -1070,7 +1084,7 @@ export class BattleTooltips {
 				if (battlePokemon?.moveTrack) {
 					for (const row of battlePokemon.moveTrack) {
 						if (move.name === row[0]) {
-							moveName = this.getPPUseText(row, true);
+							moveName = isBuildmons ? `&#8226; ${TL(move)}` : this.getPPUseText(row, true);
 							break;
 						}
 					}
@@ -1090,7 +1104,10 @@ export class BattleTooltips {
 			// move list (guessed)
 			text += `<p class="tooltip-section">`;
 			for (const row of clientPokemon.moveTrack) {
-				text += `${this.getPPUseText(row)}<br />`;
+				const moveName = row[0].startsWith('*') ? row[0].slice(1) : row[0];
+				const moveText = isBuildmons ?
+					`&#8226; ${TL(this.battle.dex.moves.get(moveName))}` : this.getPPUseText(row);
+				text += `${moveText}<br />`;
 			}
 			if (clientPokemon.moveTrack.filter(([moveName]) => {
 				if (moveName.startsWith('*')) return false;

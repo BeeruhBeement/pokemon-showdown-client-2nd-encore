@@ -1576,7 +1576,10 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 					const treeKey = `tree${col}${row}`;
 					const abilityName = buildmonsAbilities[treeKey];
 
-					if (!abilityName) continue;
+					if (!abilityName) {
+						rowHTML += `<div class="buildmons-skill-empty"></div>`;
+						continue;
+					}
 
 					const ability = toID(abilityName);
 					const abilityData = dex.abilities.get(ability);
@@ -1594,7 +1597,7 @@ class BattleAbilitySearch extends BattleTypedSearch<'ability'> {
 					if (locked) classes.push('locked');
 
 					const costLabel = cost === 1 ? '1 point' : `${cost} points`;
-					rowHTML += `<button type="button" class="${classes.join(' ')}" data-buildmons-ability="${ability}" data-buildmons-perk="${treeKey}" aria-pressed="${selected ? 'true' : 'false'}" aria-disabled="${locked ? 'true' : 'false'}" title="Cost: ${costLabel}">${abilityData.name} <small>${costLabel}</small></button> `;
+					rowHTML += `<button type="button" class="${classes.join(' ')}" data-buildmons-ability="${ability}" data-buildmons-perk="${treeKey}" aria-pressed="${selected ? 'true' : 'false'}" aria-disabled="${locked ? 'true' : 'false'}" title="Cost: ${costLabel}">${abilityData.name} <small>${costLabel}</small></button>`;
 				}
 
 				rowHTML += `</div>`;

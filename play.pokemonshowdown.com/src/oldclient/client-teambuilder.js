@@ -1359,7 +1359,9 @@
 						buf += '<span class="detailcell"><label>Gmax</label>' + (set.gigantamax || species.forme === 'Gmax' ? 'Yes' : 'No') + '</span>';
 					}
 				}
-				if (this.curTeam.gen === 9 && !isChampions) {
+				if (this.curTeam.format.includes('buildmons')) {
+					buf += '<span class="detailcell"><label>Base Power Points</label>' + species.weightkg + '</span>';
+				} else if (this.curTeam.gen === 9 && !isChampions) {
 					buf += '<span class="detailcell"><label>Tera Type</label>' + (set.teraType || species.requiredTeraType || species.types[0]) + '</span>';
 				}
 			}
@@ -3152,7 +3154,9 @@
 				buf += '</select></div></div>';
 			}
 
-			if (this.curTeam.gen === 9 && !isChampions) {
+			if (this.curTeam.format.includes('buildmons')) {
+				buf += '<div class="formrow"><label class="formlabel">Base Power Points:</label><div>' + species.weightkg + '</div></div>';
+			} else if (this.curTeam.gen === 9 && !isChampions) {
 				buf += '<div class="formrow"><label class="formlabel" title="Tera Type">Tera Type:</label><div>';
 				buf += '<select name="teratype" class="button">';
 				var types = Dex.types.all();
@@ -3271,7 +3275,9 @@
 						buf += '<span class="detailcell"><label>Gmax</label>' + (set.gigantamax || species.forme === 'Gmax' ? 'Yes' : 'No') + '</span>';
 					}
 				}
-				if (this.curTeam.gen === 9 && !isChampions) {
+				if (this.curTeam.format.includes('buildmons')) {
+					buf += '<span class="detailcell"><label>Base Power Points</label>' + species.weightkg + '</span>';
+				} else if (this.curTeam.gen === 9 && !isChampions) {
 					buf += '<span class="detailcell"><label>Tera Type</label>' + (set.teraType || species.requiredTeraType || species.types[0]) + '</span>';
 				}
 			}

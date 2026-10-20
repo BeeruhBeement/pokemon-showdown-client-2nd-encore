@@ -283,9 +283,13 @@
 	Search.prototype.renderPokemonSortRow = function () {
 		var buf = '<li class="result"><div class="sortrow">';
 		buf += '<button class="sortcol numsortcol' + (!this.sortCol ? ' cur' : '') + '">' + (!this.sortCol ? 'Sort: ' : this.engine.firstPokemonColumn) + '</button>';
-		buf += '<button class="sortcol pnamesortcol' + (this.sortCol === 'name' ? ' cur' : '') + '" data-sort="name">Name</button>';
+		var isBuildmons = this.engine.dex.modid.includes('buildmons');
+		buf += '<button class="sortcol pnamesortcol' + (isBuildmons ? ' buildmons-pnamesortcol' : '') +
+			(this.sortCol === 'name' ? ' cur' : '') + '" data-sort="name">Name</button>';
 		buf += '<button class="sortcol typesortcol' + (this.sortCol === 'type' ? ' cur' : '') + '" data-sort="type">Types</button>';
-		buf += '<button class="sortcol abilitysortcol' + (this.sortCol === 'ability' ? ' cur' : '') + '" data-sort="ability">Abilities</button>';
+		buf += '<button class="sortcol abilitysortcol' + (isBuildmons ? ' buildmons-abilitysortcol' : '') +
+			(this.sortCol === 'ability' ? ' cur' : '') + '" data-sort="ability">' +
+			(isBuildmons ? 'Skill' : 'Abilities') + '</button>';
 		buf += '<button class="sortcol statsortcol' + (this.sortCol === 'hp' ? ' cur' : '') + '" data-sort="hp">HP</button>';
 		buf += '<button class="sortcol statsortcol' + (this.sortCol === 'atk' ? ' cur' : '') + '" data-sort="atk">Atk</button>';
 		buf += '<button class="sortcol statsortcol' + (this.sortCol === 'def' ? ' cur' : '') + '" data-sort="def">Def</button>';
@@ -367,7 +371,8 @@
 		if (this.engine.dex.modid.includes('buildmons') && pokemon.color) {
 			name += '<small> the ' + BattleLog.escapeHTML(pokemon.color) + '</small>';
 		}
-		buf += '<span class="col pokemonnamecol">' + name + '</span> ';
+		var nameColumnClass = this.engine.dex.modid.includes('buildmons') ? ' buildmons-pokemonnamecol' : '';
+		buf += '<span class="col pokemonnamecol' + nameColumnClass + '">' + name + '</span> ';
 
 		// error
 		if (errorMessage) {
@@ -390,7 +395,6 @@
 			var abilities = pokemon.abilities;
 			if (this.engine.dex.modid.includes('buildmons')) {
 				buf += '<span class="col abilitycol">' + abilities['skill'] + '</span>';
-				buf += '<span class="col abilitycol">' + (abilities['5'] ? abilities['5'] : '') + '</span>';
 			} else if (gen >= 5) {
 				if (abilities['1']) {
 					buf += '<span class="col twoabilitycol">' + abilities['0'] + '<br />' +
@@ -611,11 +615,12 @@
 		buf += '</span> ';
 
 		// power, accuracy, pp
-		var pp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
+		var noPPBoosts = move.noPPBoosts || this.engine && this.engine.dex.modid.includes('buildmons');
+		var pp = (move.pp === 1 || noPPBoosts ? move.pp : move.pp * 8 / 5);
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
 		if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
-			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
+			if (!noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}
 		buf += '<span class="col labelcol">' + (move.category !== 'Status' ? ('<em>Power</em><br />' + (move.basePower || '&mdash;')) : '') + '</span> ';
 		buf += '<span class="col widelabelcol"><em>Accuracy</em><br />' + (move.accuracy && move.accuracy !== true ? move.accuracy + '%' : '&mdash;') + '</span> ';
@@ -652,11 +657,12 @@
 		buf += '</span> ';
 
 		// power, accuracy, pp
-		var pp = (move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5);
+		var noPPBoosts = move.noPPBoosts || this.engine && this.engine.dex.modid.includes('buildmons');
+		var pp = (move.pp === 1 || noPPBoosts ? move.pp : move.pp * 8 / 5);
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
 		if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
-			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
+			if (!noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}
 		buf += '<span class="col labelcol">' + (move.category !== 'Status' ? ('<em>Power</em><br />' + (move.basePower || '&mdash;')) : '') + '</span> ';
 		buf += '<span class="col widelabelcol"><em>Accuracy</em><br />' + (move.accuracy && move.accuracy !== true ? move.accuracy + '%' : '&mdash;') + '</span> ';
@@ -695,11 +701,12 @@
 		buf += '</span> ';
 
 		// power, accuracy, pp
-		var pp = move.pp === 1 || move.noPPBoosts ? move.pp : move.pp * 8 / 5;
+		var noPPBoosts = move.noPPBoosts || this.engine && this.engine.dex.modid.includes('buildmons');
+		var pp = move.pp === 1 || noPPBoosts ? move.pp : move.pp * 8 / 5;
 		if (this.engine && this.engine.dex.gen < 3) pp = Math.min(61, pp);
 		if (this.engine && this.engine.dex.modid === 'champions') {
 			pp = move.pp > 20 ? 20 : move.pp;
-			if (!move.noPPBoosts) pp = (pp / 5 + 1) * 4;
+			if (!noPPBoosts) pp = (pp / 5 + 1) * 4;
 		}
 		buf += '<span class="col labelcol">' + (move.category !== 'Status' ? ('<em>Power</em><br />' + (move.basePower || '&mdash;')) : '') + '</span> ';
 		buf += '<span class="col widelabelcol"><em>Accuracy</em><br />' + (move.accuracy && move.accuracy !== true ? move.accuracy + '%' : '&mdash;') + '</span> ';
