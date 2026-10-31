@@ -972,13 +972,8 @@ export class BattleTooltips {
 
 		const hpName = TL.stat.hp || 'HP';
 		const faintedName = TL.status.fnt || 'fainted';
-		const customStatusName = pokemon.status === 'rad' ? 'Irradiated' :
-			pokemon.status === 'wet' ? 'Wet' :
-			pokemon.status === 'ptr' ? 'Petrified' :
-			pokemon.status === 'bld' ? 'Bleeding' :
-			pokemon.status === 'cor' ? 'Corroded' : '';
 		const statusName = pokemon.status ?
-			TL.status[pokemon.status] || customStatusName || pokemon.status.toUpperCase() : '';
+			TL.status[pokemon.status] || pokemon.status.toUpperCase() : '';
 		const status = pokemon.status ?
 			` <span class="status ${pokemon.status}">${statusName}</span>` : '';
 		if (pokemon.fainted && pokemon.maxhp === 100) {

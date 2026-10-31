@@ -771,7 +771,8 @@
 					if (this.battle.dex.modid.includes('buildmons')) {
 						var abilityId = curActive.ability || switchables[pos].ability || '';
 						var abilityName = abilityId ? this.battle.dex.abilities.get(abilityId).name : '';
-						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Activate ' + BattleLog.escapeHTML(abilityName) + '</label>');
+						var activateChecked = this.choice.buildmonsTerastallize ? ' checked' : '';
+						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize"' + activateChecked + ' />&nbsp;Activate ' + BattleLog.escapeHTML(abilityName) + '</label>');
 					} else {
 						checkboxes.push('<label class="megaevo"><input type="checkbox" name="terastallize" />&nbsp;Terastallize<br />' + Dex.getTypeIcon(canTerastallize) + '</label>');
 					}
@@ -1331,11 +1332,16 @@
 				var activeData = this.request.active[this.choice.choices.length];
 				if (activeData && typeof activeData.ppBudget === 'number') {
 					var queuedMoves = this.choice.buildmonsMoves || (this.choice.buildmonsMoves = []);
+					this.choice.buildmonsTerastallize = isTerastal;
 					var event = '';
 					if (!queuedMoves.length) {
 						event = isMega ? 'mega' : isMegaX ? 'megax' : isMegaY ? 'megay' :
 							isZMove ? 'zmove' : isUltraBurst ? 'ultra' : isDynamax ? 'dynamax' :
 							isTerastal ? 'terastallize' : '';
+					} else if (isTerastal) {
+						queuedMoves[0].event = 'terastallize';
+					} else if (queuedMoves[0].event === 'terastallize') {
+						queuedMoves[0].event = '';
 					}
 					var queued = { move: parseInt(pos, 10), targetLoc: 0, event: event };
 					if (nearActive.length > 1 && target in choosableTargets) {
@@ -1389,6 +1395,13 @@
 		},
 		finishBuildmonsMoves: function () {
 			if (!this.choice.buildmonsMoves || !this.choice.buildmonsMoves.length) return;
+			var activateBuildmonsAbility = !!(this.$('input[name=terastallize]')[0] || '').checked;
+			this.choice.buildmonsTerastallize = activateBuildmonsAbility;
+			if (activateBuildmonsAbility) {
+				this.choice.buildmonsMoves[0].event = 'terastallize';
+			} else if (this.choice.buildmonsMoves[0].event === 'terastallize') {
+				this.choice.buildmonsMoves[0].event = '';
+			}
 			var moveChoices = this.choice.buildmonsMoves.map(function (queued) {
 				return queued.move + (queued.targetLoc ? ' ' + queued.targetLoc : '') + (queued.event ? ' ' + queued.event : '');
 			});

@@ -2725,6 +2725,98 @@ export class PokemonSprite extends Sprite {
 				time: instant ? 0 : 300,
 			});
 		}
+		// buildmons stuff
+		else if (id === 'wormhole') {
+			const shadowball = new Sprite(BattleEffects.shadowball, {
+				display: 'block',
+				x: this.x,
+				y: this.y,
+				z: this.z,
+				scale: 1.2,
+				opacity: 0.6,
+			}, this.scene);
+			this.$el.after(shadowball.$el);
+			this.effects[id] = [shadowball];
+		}
+		else if (id === 'servitordrone') {
+			const gear = new Sprite(BattleEffects.gear, {
+				display: 'block',
+				x: this.leftof(25),
+				y: this.y + 18,
+				z: this.z,
+				scale: 0.5,
+				opacity: 0.8,
+			}, this.scene);
+			const eye = new Sprite(this.sp.shiny ? BattleEffects.waterwisp : BattleEffects.energyball, {
+				display: 'block',
+				x: this.leftof(25),
+				y: this.y + 18,
+				z: this.z,
+				scale: 0.2,
+				opacity: 0.8,
+			}, this.scene);
+			this.$el.before(gear.$el);
+			this.$el.before(eye.$el);
+			let startTime: number | undefined;
+			const spinGear = (time: number) => {
+				if (!gear.$el[0].isConnected) return;
+				if (startTime === undefined) startTime = time;
+				const rotation = ((time - startTime) % 5000) / 5000 * 360;
+				gear.$el.css('transform', `rotate(${rotation}deg)`);
+				requestAnimationFrame(spinGear);
+			};
+			requestAnimationFrame(spinGear);
+			this.effects[id] = [gear, eye];
+		}
+		else if (id === 'servoarm') {
+			const gear = new Sprite(BattleEffects.gear, {
+				display: 'block',
+				x: this.leftof(-15),
+				y: this.y - 8,
+				z: this.z,
+				scale: 0.3,
+				opacity: 0.8,
+			}, this.scene);
+			const arm = new Sprite(BattleEffects.fist1, {
+				display: 'block',
+				x: this.leftof(-25) + (this.isFrontSprite ? 5 : 0),
+				y: this.y - 5  - (this.isFrontSprite ? 3 : 0),
+				z: this.z,
+				scale: 0.5,
+				opacity: 0.8,
+			}, this.scene);
+			if (this.isFrontSprite) {
+				this.$el.before(gear.$el);
+				this.$el.after(arm.$el);
+			} else {
+				this.$el.after(gear.$el);
+				this.$el.before(arm.$el);
+				arm.$el.css('transform', 'scaleX(-1)');
+			}
+			this.effects[id] = [gear, arm];
+		}
+		else if (id === 'pincermaneuver' && this.sp.url) {
+			const rightOffset = this.isFrontSprite ? 1 : -1;
+			const babies = [-1, 1].map(offset => ({
+				offset,
+				sprite: new Sprite(this.sp, {
+					display: 'block',
+					x: this.leftof(offset * 24),
+					y: this.y - 4,
+					z: this.behind(10),
+					scale: 0.6,
+					opacity: 0.8,
+				}, this.scene),
+			}));
+			for (const { offset, sprite } of babies) {
+				if (offset === rightOffset) {
+					this.$el.after(sprite.$el);
+				} else {
+					this.$el.before(sprite.$el);
+				}
+			}
+			this.effects[id] = babies.map(({ sprite }) => sprite);
+		}
 	}
 
 	removeEffect(id: ID, instant?: boolean) {
