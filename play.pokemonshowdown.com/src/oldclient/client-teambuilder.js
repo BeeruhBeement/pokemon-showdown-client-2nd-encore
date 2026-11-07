@@ -1341,6 +1341,12 @@
 					buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 255) + '</span>';
 				}
 				buf += '<span class="detailcell"><label>Shiny</label>' + (set.shiny ? 'Yes' : 'No') + '</span>';
+				if (this.curTeam.format.includes('plasticpyrite')) {
+					buf += '<span class="detailcell"><label>Tiny</label>' + (set.tiny ? 'Yes' : 'No') + '</span>';
+					if (species.hasNightmareForm) {
+						buf += '<span class="detailcell"><label>Nightmare</label>' + (set.nightmare ? 'Yes' : 'No') + '</span>';
+					}
+				}
 				if (!isLetsGo && this.curTeam.gen < 9) {
 					if (this.curTeam.gen === 8 && !isNatDex) {
 						if (isBDSP && species.baseSpecies === "Unown") {
@@ -2180,7 +2186,8 @@
 			}
 			for (var i = start; i < end; i++) {
 				var set = this.curSetList[i];
-				var pokemonicon = '<span class="picon pokemonicon-' + i + '" style="' + Dex.getPokemonIcon(set) + '"></span>';
+				var pokemonicon = '<span class="picon pokemonicon-' + i + '" style="' +
+					Dex.getPokemonIcon(set, false, this.curTeam.dex) + '"></span>';
 				if (!set.species) {
 					buf += '<button disabled class="addpokemon" aria-label="Add Pok&eacute;mon"><i class="fa fa-plus"></i></button> ';
 					isAdd = true;
@@ -2203,7 +2210,9 @@
 				.attr('style', Dex.getTeambuilderSprite(set, this.curTeam.dex))
 				.toggleClass('pixelated', !!Dex.getTeambuilderSpriteData(set, this.curTeam.dex).pixelated);
 
-			this.$('.pokemonicon-' + this.curSetLoc).css('background', Dex.getPokemonIcon(set).substr(11));
+			this.$('.pokemonicon-' + this.curSetLoc).attr(
+				'style', Dex.getPokemonIcon(set, false, this.curTeam.dex)
+			);
 
 			var item = this.curTeam.dex.items.get(set.item);
 			if (item.id) {
@@ -3077,6 +3086,7 @@
 			var isChampions = this.curTeam.format.includes('champions');
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
+			var isPlasticPyrite = this.curTeam.format.includes('plasticpyrite');
 			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex') || this.curTeam.format.includes('hellskitchen') || this.curTeam.format.includes('altermons') || this.curTeam.format.includes('ironfist') || this.curTeam.format.includes('typeshift') || this.curTeam.format.includes('ptest');
 			var isHackmons = this.curTeam.format.includes('hackmons') || this.curTeam.format.endsWith('bh');
 
@@ -3118,6 +3128,19 @@
 				buf += '<label class="checkbox inline"><input type="radio" name="shiny" value="yes"' + (set.shiny ? ' checked' : '') + ' /> Yes</label> ';
 				buf += '<label class="checkbox inline"><input type="radio" name="shiny" value="no"' + (!set.shiny ? ' checked' : '') + ' /> No</label>';
 				buf += '</div></div>';
+
+				if (isPlasticPyrite) {
+					buf += '<div class="formrow"><label class="formlabel">Tiny:</label><div>';
+					buf += '<label class="checkbox inline"><input type="radio" name="tiny" value="yes"' + (set.tiny ? ' checked' : '') + ' /> Yes</label> ';
+					buf += '<label class="checkbox inline"><input type="radio" name="tiny" value="no"' + (!set.tiny ? ' checked' : '') + ' /> No</label>';
+					buf += '</div></div>';
+					if (species.hasNightmareForm) {
+						buf += '<div class="formrow"><label class="formlabel">Nightmare:</label><div>';
+						buf += '<label class="checkbox inline"><input type="radio" name="nightmare" value="yes"' + (set.nightmare ? ' checked' : '') + ' /> Yes</label> ';
+						buf += '<label class="checkbox inline"><input type="radio" name="nightmare" value="no"' + (!set.nightmare ? ' checked' : '') + ' /> No</label>';
+						buf += '</div></div>';
+					}
+				}
 
 				if (this.curTeam.gen === 8 && !isBDSP) {
 					if (!species.cannotDynamax) {
@@ -3208,6 +3231,21 @@
 				delete set.shiny;
 			}
 
+			if (this.curTeam.format.includes('plasticpyrite')) {
+				if (this.$chart.find('input[name=tiny]:checked').val() === 'yes') {
+					set.tiny = true;
+				} else {
+					delete set.tiny;
+				}
+				if (species.hasNightmareForm) {
+					if (this.$chart.find('input[name=nightmare]:checked').val() === 'yes') {
+						set.nightmare = true;
+					} else {
+						delete set.nightmare;
+					}
+				}
+			}
+
 			// dynamax level
 			var dynamaxLevel = parseInt(this.$chart.find('input[name=dynamaxlevel]').val(), 10);
 			if (isNaN(dynamaxLevel) || dynamaxLevel > 10 || dynamaxLevel < 0) dynamaxLevel = 10;
@@ -3270,6 +3308,12 @@
 					if (this.curTeam.gen < 8 || isNatDex) buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 255) + '</span>';
 				}
 				buf += '<span class="detailcell"><label>Shiny</label>' + (set.shiny ? 'Yes' : 'No') + '</span>';
+				if (this.curTeam.format.includes('plasticpyrite')) {
+					buf += '<span class="detailcell"><label>Tiny</label>' + (set.tiny ? 'Yes' : 'No') + '</span>';
+					if (species.hasNightmareForm) {
+						buf += '<span class="detailcell"><label>Nightmare</label>' + (set.nightmare ? 'Yes' : 'No') + '</span>';
+					}
+				}
 				if (!isLetsGo && (this.curTeam.gen < 8 || isNatDex)) buf += '<span class="detailcell"><label>HP Type</label>' + (set.hpType || 'Dark') + '</span>';
 				if (this.curTeam.gen === 8 && !isBDSP) {
 					if (!species.cannotDynamax) {
@@ -3619,6 +3663,8 @@
 				set.gender = 'F';
 				if (set.happiness) delete set.happiness;
 				if (set.shiny) delete set.shiny;
+				if (set.tiny) delete set.tiny;
+				if (set.nightmare) delete set.nightmare;
 				if (set.dynamaxLevel) delete set.dynamaxLevel;
 				if (set.gigantamax) delete set.gigantamax;
 				set.item = 'Starf Berry';
@@ -3653,6 +3699,8 @@
 				}
 				if (set.happiness) delete set.happiness;
 				if (set.shiny) delete set.shiny;
+				delete set.tiny;
+				delete set.nightmare;
 				if (set.dynamaxLevel) delete set.dynamaxLevel;
 				if (set.gigantamax) delete set.gigantamax;
 				set.item = 'Leftovers';
@@ -3917,6 +3965,8 @@
 			if (species.gender && species.gender !== 'N') set.gender = species.gender;
 			if (set.happiness) delete set.happiness;
 			if (set.shiny) delete set.shiny;
+			delete set.tiny;
+			delete set.nightmare;
 			if (set.dynamaxLevel) delete set.dynamaxLevel;
 			if (set.gigantamax) delete set.gigantamax;
 			if (set.teraType) delete set.teraType;

@@ -446,6 +446,8 @@ export interface SpriteData {
 	isFrontSprite?: boolean;
 	cryurl?: string;
 	shiny?: boolean;
+	tiny?: boolean;
+	nightmare?: boolean;
 }
 
 export interface TeambuilderSpriteData {
@@ -455,6 +457,8 @@ export interface TeambuilderSpriteData {
 	spriteDir: string;
 	spriteid: string;
 	shiny?: boolean;
+	tiny?: boolean;
+	nightmare?: boolean;
 	pixelated?: boolean;
 }
 
@@ -928,6 +932,8 @@ export const Dex = new class implements ModdedDex {
 		mod?: string,
 		dex?: ModdedDex,
 		dynamax?: boolean,
+		tiny?: boolean,
+		nightmare?: boolean,
 	} = { gen: 6 }) {
 		const mechanicsGen = options.gen || 6;
 		let isDynamax = !!options.dynamax;
@@ -939,6 +945,8 @@ export const Dex = new class implements ModdedDex {
 				options.shiny = pokemon.shiny;
 				options.gender = pokemon.gender;
 			}
+			options.tiny = pokemon.tiny;
+			options.nightmare = pokemon.nightmare;
 			let isGigantamax = false;
 			if (pokemon.volatiles.dynamax) {
 				if (pokemon.volatiles.dynamax[1]) {
@@ -1050,9 +1058,17 @@ export const Dex = new class implements ModdedDex {
 		const activeMod = this.getModdedSpriteDataMod(species.id.toString(), 'species', (window as any).app?.curRoom?.battle?.dex?.modid);
 		if (activeMod) {
 			const data = this.getTeambuilderSpriteData(pokemon, Dex.mod(activeMod));
-			spriteData.url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + activeMod + '/' + (spriteData.isFrontSprite ? 'front' : 'back') + (spriteData.shiny ? '-shiny' : '') + '/' + data.spriteid + '.png';
+			const spriteName = data.spriteid +
+				(activeMod === 'gen9plasticpyrite' && options.nightmare ? '-nightmare' : '');
+			const shiny = spriteData.shiny ? '-shiny' : '';
+			spriteData.url =
+				`https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${activeMod}/${facing}${shiny}/${spriteName}.png`;
 			spriteData.pixelated = true;
 			spriteData.gen = 5;
+			if (activeMod === 'gen9plasticpyrite' && options.tiny) {
+				spriteData.w *= 0.5;
+				spriteData.h *= 0.5;
+			}
 			return spriteData;
 		}
 
@@ -1148,7 +1164,9 @@ export const Dex = new class implements ModdedDex {
 		return num;
 	}
 
-	getPokemonIcon(pokemon: string | Pokemon | ServerPokemon | Dex.PokemonSet | null, facingLeft?: boolean, dex?: ModdedDex) {
+	getPokemonIcon(
+		pokemon: string | Pokemon | ServerPokemon | Dex.PokemonSet | null, facingLeft?: boolean, dex?: ModdedDex
+	) {
 		if (pokemon === 'pokeball') {
 			return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-pokeball-sheet.png) no-repeat scroll -0px 4px`;
 		} else if (pokemon === 'pokeball-statused') {
@@ -1178,7 +1196,9 @@ export const Dex = new class implements ModdedDex {
 			`;opacity:.3;filter:grayscale(100%) brightness(.5)` : ``);
 		const activeMod = this.getModdedSpriteDataMod(id, 'species', dex);
 		if (activeMod) {
-			return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${activeMod}/icons/${id}.png') no-repeat scroll ${fainted}`;
+			const size = activeMod === 'gen9plasticpyrite' ?
+				';background-size:30px 30px;background-position:center' : '';
+			return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${activeMod}/icons/${id}.png') no-repeat scroll ${fainted}${size}`;
 		}
 		return `background:transparent url(${Dex.resourcePrefix}sprites/pokemonicons-sheet.png?v22) no-repeat scroll -${left}px -${top}px${fainted}`;
 	}
@@ -1213,6 +1233,8 @@ export const Dex = new class implements ModdedDex {
 			y: -3,
 		};
 		if (pokemon.shiny) spriteData.shiny = true;
+		if (pokemon.tiny) spriteData.tiny = true;
+		if (pokemon.nightmare) spriteData.nightmare = true;
 		if (dex.modid === 'gen7letsgo') gen = 8;
 		if (Dex.prefs('nopastgens')) gen = 9;
 		if (Dex.prefs('bwgfx') && gen > 5) gen = 5;
@@ -1263,12 +1285,15 @@ export const Dex = new class implements ModdedDex {
 		if (!pokemon) return '';
 		const data = this.getTeambuilderSpriteData(pokemon, dex);
 		const shiny = (data.shiny ? '-shiny' : '');
-		const resize = (data.h ? `background-size:${data.h}px` : '');
 		const mod = this.getModdedSpriteDataMod(toID(pokemon.species || pokemon), 'species', dex);
+		const resize = (mod === 'gen9plasticpyrite' && data.tiny ?
+			'background-size:80px 80px;' : (data.h ? `background-size:${data.h}px` : ''));
 
 		if (mod) {
-			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + mod + '/front' + shiny + '/' + data.spriteid + '.png';
-			return `background-image:url('${url}');background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
+			const spriteName = data.spriteid + (mod === 'gen9plasticpyrite' && data.nightmare ? '-nightmare' : '');
+			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + mod + '/front' + shiny + '/' + spriteName + '.png';
+			const tinyOffset = mod === 'gen9plasticpyrite' && data.tiny ? 10 : 0;
+			return `background-image:url('${url}');background-position:${data.x + xOffset + tinyOffset}px ${data.y + yOffset + tinyOffset}px;background-repeat:no-repeat;${resize}`;
 		}
 
 		return `background-image:url(${Dex.resourcePrefix}${data.spriteDir}${shiny}/${data.spriteid}.png);background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;

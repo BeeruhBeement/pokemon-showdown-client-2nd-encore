@@ -88,6 +88,7 @@ export class BattleFormat implements FormatData {
 		if (this.gen === 8 && this.isBDSP) this.mod = 'gen8bdsp' as ID;
 		if (this.gen === 9 && this.isChampions) this.mod = 'champions' as ID;
 		if (this.gen === 9 && id.includes('hellskitchen')) this.mod = 'gen9hellskitchen' as ID;
+		if (this.gen === 9 && id.includes('plasticpyrite')) this.mod = 'gen9plasticpyrite' as ID;
 		if (this.gen === 3 && id.includes('puffypink')) this.mod = 'gen3puffypink' as ID;
 		if (this.gen === 9 && id.includes('altermons')) this.mod = 'gen9altermons' as ID;
 		if (this.gen === 9 && id.includes('ironfist')) this.mod = 'gen9ironfist' as ID;
@@ -1709,6 +1710,7 @@ export class Species implements Effect {
 	}>;
 	readonly bst: number;
 	readonly weightkg: number;
+	readonly hasNightmareForm: boolean;
 
 	// flavor data
 	readonly heightm: number;
@@ -1767,6 +1769,7 @@ export class Species implements Effect {
 		this.bst = this.baseStats.hp + this.baseStats.atk + this.baseStats.def +
 			this.baseStats.spa + this.baseStats.spd + this.baseStats.spe;
 		this.weightkg = data.weightkg || 0;
+		this.hasNightmareForm = !!data.hasNightmareForm;
 
 		this.heightm = data.heightm || 0;
 		this.gender = data.gender || '';

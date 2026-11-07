@@ -30,6 +30,8 @@ export declare namespace Teams {
 		level: number;
 		/** Defaults to no (error if shiny event) */
 		shiny: boolean;
+		tiny?: boolean;
+		nightmare?: boolean;
 		/** Defaults to 255 unless you have Frustration, in which case 0 */
 		happiness: number;
 		/** Defaults to event required ball, otherwise Poké Ball */
@@ -125,13 +127,16 @@ export const Teams = new class {
 			buf += `|${set.happiness !== undefined && set.happiness !== 255 ? set.happiness : ''}`;
 
 			if (set.pokeball || set.hpType || set.gigantamax ||
-				(set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined) {
+				(set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined ||
+				set.tiny || set.nightmare) {
 				buf += `,${set.hpType || ''}`;
 				buf += `,${this.packName(set.pokeball || '')}`;
 				buf += `,${set.gigantamax ? 'G' : ''}`;
 				buf += `,${set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10 ? set.dynamaxLevel : ''}`;
 				buf += `,${set.teraType || ''}`;
 				buf += `,${set.perks?.join(',') || ''}`;
+				buf += `,${set.tiny ? 'T' : ''}`;
+				buf += `,${set.nightmare ? 'N' : ''}`;
 			}
 		}
 
@@ -270,9 +275,10 @@ export const Teams = new class {
 				set.gigantamax = !!misc[3] || undefined;
 				set.dynamaxLevel = (misc[4] ? Number(misc[4]) : undefined);
 				set.teraType = misc[5] || undefined;
-				if (misc.length >= 7) {
-					set.perks = misc.slice(6).filter(perk => /^tree[0-2][0-5]$/.test(perk));
-				}
+				const perks = misc.slice(6).filter(perk => /^tree[0-2][0-5]$/.test(perk));
+				if (perks.length || (misc.length >= 7 && misc[7] !== 'T' && misc[8] !== 'N')) set.perks = perks;
+				if (misc[7] === 'T') set.tiny = true;
+				if (misc[8] === 'N') set.nightmare = true;
 			}
 			i = j + 1;
 			if (j < 0 || i <= lastI) break;
@@ -396,6 +402,8 @@ export const Teams = new class {
 		if (set.shiny) {
 			text += !newFormat ? `Shiny: Yes\n` : `Shiny\n`;
 		}
+		if (set.tiny) text += `Tiny: Yes\n`;
+		if (set.nightmare) text += `Nightmare: Yes\n`;
 		if (typeof set.happiness === 'number' && set.happiness !== 255 && !isNaN(set.happiness)) {
 			text += `Happiness: ${set.happiness}\n`;
 		}
@@ -489,6 +497,10 @@ export const Teams = new class {
 			set.species = line.slice(9);
 		} else if (line === 'Shiny: Yes' || line === 'Shiny') {
 			set.shiny = true;
+		} else if (line === 'Tiny: Yes') {
+			set.tiny = true;
+		} else if (line === 'Nightmare: Yes') {
+			set.nightmare = true;
 		} else if (line.startsWith('Level: ')) {
 			set.level = +line.slice(7);
 		} else if (line.startsWith('Happiness: ')) {

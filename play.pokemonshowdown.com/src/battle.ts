@@ -86,6 +86,8 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 	level = 100;
 	gender: Dex.GenderName = 'N';
 	shiny = false;
+	tiny = false;
+	nightmare = false;
 
 	hpcolor: HPColor = 'g';
 	moves: string[] = [];
@@ -123,6 +125,8 @@ export class Pokemon implements PokemonDetails, PokemonHealth {
 		this.name = data.name;
 		this.level = data.level;
 		this.shiny = data.shiny;
+		this.tiny = data.tiny;
+		this.nightmare = data.nightmare;
 		this.gender = data.gender || 'N';
 		this.ident = data.ident;
 		this.terastallized = data.terastallized || '';
@@ -1033,6 +1037,8 @@ export interface PokemonDetails {
 	speciesForme: string;
 	level: number;
 	shiny: boolean;
+	tiny: boolean;
+	nightmare: boolean;
 	gender: Dex.GenderName | '';
 	ident: string;
 	terastallized: string;
@@ -3327,6 +3333,8 @@ export class Battle {
 		output.speciesForme = name;
 		output.level = 100;
 		output.shiny = false;
+		output.tiny = false;
+		output.nightmare = false;
 		output.gender = '';
 		output.ident = (!isTeamPreview ? pokemonid : '');
 		output.searchid = (!isTeamPreview ? `${pokemonid}|${details}` : '');
@@ -3334,6 +3342,13 @@ export class Battle {
 		if (splitDetails[splitDetails.length - 1].startsWith('tera:')) {
 			output.terastallized = splitDetails[splitDetails.length - 1].slice(5);
 			splitDetails.pop();
+		}
+		while (splitDetails[splitDetails.length - 1] === 'tiny' || splitDetails[splitDetails.length - 1] === 'nightmare') {
+			if (splitDetails.pop() === 'tiny') {
+				output.tiny = true;
+			} else {
+				output.nightmare = true;
+			}
 		}
 		if (splitDetails[splitDetails.length - 1] === 'shiny') {
 			output.shiny = true;
@@ -3577,6 +3592,9 @@ export class Battle {
 
 			if (this.tier.includes(`Hells Kitchen`)) {
 				this.dex = Dex.mod('gen9hellskitchen' as ID);
+			}
+			if (this.tier.includes(`Plastic Pyrite`)) {
+				this.dex = Dex.mod('gen9plasticpyrite' as ID);
 			}
 			if (this.tier.includes(`Puffy Pink`)) {
 				this.dex = Dex.mod('gen3puffypink' as ID);

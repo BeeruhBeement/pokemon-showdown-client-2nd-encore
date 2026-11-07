@@ -675,7 +675,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 	protected formatType: 'doubles' | 'bdsp' | 'bdspdoubles' | 'rs' | 'frlg' | 'bw1' | 'letsgo' | 'metronome' | 'natdex' |
 		'nfe' | 'ssdlc1' | 'ssdlc1doubles' | 'predlc' | 'predlcdoubles' | 'svdlc1' | 'svdlc1doubles' | 'stadium' | 'lc' |
 		'champions' | 'natdexchampions' |
-		'hellskitchen' | 'puffypink' | 'altermons' | 'ironfist' | 'typeshift' | 'ptest' | 'wordmons' | 'buildmons' |
+		'hellskitchen' | 'plasticpyrite' | 'puffypink' | 'altermons' | 'ironfist' | 'typeshift' | 'ptest' | 'wordmons' | 'buildmons' |
 		null = null;
 	isDoubles = false;
 
@@ -825,6 +825,11 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.dex = Dex.mod('gen9hellskitchen' as ID);
 			format = format.slice(12) as ID;
 		}
+		if (format.includes('plasticpyrite')) {
+			this.formatType = 'plasticpyrite';
+			this.dex = Dex.mod('gen9plasticpyrite' as ID);
+			format = format.slice(13) as ID;
+		}
 		if (format.includes('puffypink')) {
 			this.formatType = 'puffypink';
 			this.dex = Dex.mod('gen3puffypink' as ID);
@@ -961,6 +966,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 		if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
 		
 		if (this.formatType === 'hellskitchen') table = table['gen9hellskitchen'];
+		if (this.formatType === 'plasticpyrite') table = table['gen9plasticpyrite'];
 		if (this.formatType === 'puffypink') table = table['gen3puffypink'];
 		if (this.formatType === 'altermons') table = table['gen9altermons'];
 		if (this.formatType === 'ironfist') table = table['gen9ironfist'];
@@ -1043,6 +1049,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			if (this.formatType === 'natdexchampions') table = table['natdexchampions'];
 			
 			if (this.formatType === 'hellskitchen') table = table['gen9hellskitchen'];
+			if (this.formatType === 'plasticpyrite') table = table['gen9plasticpyrite'];
 			if (this.formatType === 'puffypink') table = table['gen3puffypink'];
 			if (this.formatType === 'altermons') table = table['gen9altermons'];
 			if (this.formatType === 'ironfist') table = table['gen9ironfist'];
@@ -1090,6 +1097,7 @@ abstract class BattleTypedSearch<T extends SearchType> {
 			this.formatType === 'natdexchampions' ? `natdexchampions` :
 
 			this.formatType === 'hellskitchen' ? `gen9hellskitchen` :
+			this.formatType === 'plasticpyrite' ? `gen9plasticpyrite` :
 			this.formatType === 'puffypink' ? `gen3puffypink` :
 			this.formatType === 'altermons' ? `gen9altermons` :
 			this.formatType === 'ironfist' ? `gen9ironfist` :
@@ -1183,6 +1191,9 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			case 'venusaurmegag':
 				results.push(['header', "Hells Kitchen"]);
 				break;
+			case 'malhelent':
+				results.push(['header', "Plastic Pyrite"]);
+				break;
 			case 'whispyjr':
 				results.push(['header', "Puffy Pink"]);
 				break;
@@ -1215,6 +1226,8 @@ class BattlePokemonSearch extends BattleTypedSearch<'pokemon'> {
 			table = table[`natdexchampions`];
 		} else if (this.formatType === 'hellskitchen') {
 			table = table[`gen9hellskitchen`];
+		} else if (this.formatType === 'plasticpyrite') {
+			table = table[`gen9plasticpyrite`];
 		} else if (this.formatType === 'puffypink') {
 			table = table[`gen3puffypink`];
 		} else if (this.formatType === 'altermons') {
@@ -1699,6 +1712,8 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 			table = table[`natdexchampions`];
 		} else if (this.formatType === 'hellskitchen') {
 			table = table[`gen9hellskitchen`];
+		} else if (this.formatType === 'plasticpyrite') {
+			table = table[`gen9plasticpyrite`];
 		} else if (this.formatType === 'puffypink') {
 			table = table[`gen3puffypink`];
 		} else if (this.formatType === 'altermons') {
@@ -2104,6 +2119,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType === 'natdexchampions') lsetTable = lsetTable['natdexchampions'];
 		
 		if (this.formatType === 'hellskitchen') lsetTable = lsetTable['gen9hellskitchen'];
+		if (this.formatType === 'plasticpyrite') lsetTable = lsetTable['gen9plasticpyrite'];
 		if (this.formatType === 'puffypink') lsetTable = lsetTable['gen3puffypink'];
 		if (this.formatType === 'altermons') lsetTable = lsetTable['gen9altermons'];
 		if (this.formatType === 'ironfist') lsetTable = lsetTable['gen9ironfist'];

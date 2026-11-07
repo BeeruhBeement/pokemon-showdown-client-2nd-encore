@@ -866,13 +866,17 @@ Storage.packTeam = function (team) {
 			buf += '|';
 		}
 
-		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax || (set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined) {
+		if (set.pokeball || (set.hpType && !hasHP) || set.gigantamax ||
+			(set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10) || set.teraType || set.perks !== undefined ||
+			set.tiny || set.nightmare) {
 			buf += ',' + (set.hpType || '');
 			buf += ',' + toID(set.pokeball);
 			buf += ',' + (set.gigantamax ? 'G' : '');
 			buf += ',' + (set.dynamaxLevel !== undefined && set.dynamaxLevel !== 10 ? set.dynamaxLevel : '');
 			buf += ',' + (set.teraType || '');
 			buf += ',' + (set.perks || []).join(',');
+			buf += ',' + (set.tiny ? 'T' : '');
+			buf += ',' + (set.nightmare ? 'N' : '');
 		}
 	}
 
@@ -993,9 +997,10 @@ Storage.fastUnpackTeam = function (buf) {
 			set.gigantamax = !!misc[3];
 			set.dynamaxLevel = (misc[4] ? Number(misc[4]) : 10);
 			set.teraType = misc[5];
-			if (misc.length >= 7) {
-				set.perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
-			}
+			var perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
+			if (perks.length || (misc.length >= 7 && misc[7] !== 'T' && misc[8] !== 'N')) set.perks = perks;
+			if (misc[7] === 'T') set.tiny = true;
+			if (misc[8] === 'N') set.nightmare = true;
 		}
 		if (j < 0) break;
 		i = j + 1;
@@ -1119,9 +1124,10 @@ Storage.unpackTeam = function (buf) {
 			set.gigantamax = !!misc[3];
 			set.dynamaxLevel = (misc[4] ? Number(misc[4]) : 10);
 			set.teraType = misc[5];
-			if (misc.length >= 7) {
-				set.perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
-			}
+			var perks = misc.slice(6).filter(function (perk) { return /^tree[0-2][0-5]$/.test(perk); });
+			if (perks.length || (misc.length >= 7 && misc[7] !== 'T' && misc[8] !== 'N')) set.perks = perks;
+			if (misc[7] === 'T') set.tiny = true;
+			if (misc[8] === 'N') set.nightmare = true;
 		}
 		if (j < 0 || buf.indexOf('|', j) < 0) break;
 		i = j + 1;
@@ -1289,6 +1295,10 @@ Storage.importTeam = function (buffer, teams) {
 			curSet.ability = line;
 		} else if (line === 'Shiny: Yes') {
 			curSet.shiny = true;
+		} else if (line === 'Tiny: Yes') {
+			curSet.tiny = true;
+		} else if (line === 'Nightmare: Yes') {
+			curSet.nightmare = true;
 		} else if (line.substr(0, 7) === 'Level: ') {
 			line = line.substr(7);
 			curSet.level = +line;
@@ -1423,6 +1433,12 @@ Storage.exportTeam = function (team, hidestats, shownature) {
 		}
 		if (curSet.shiny) {
 			text += 'Shiny: Yes  \n';
+		}
+		if (curSet.tiny) {
+			text += 'Tiny: Yes  \n';
+		}
+		if (curSet.nightmare) {
+			text += 'Nightmare: Yes  \n';
 		}
 		if (typeof curSet.happiness === 'number' && curSet.happiness !== 255 && !isNaN(curSet.happiness)) {
 			text += 'Happiness: ' + curSet.happiness + "  \n";

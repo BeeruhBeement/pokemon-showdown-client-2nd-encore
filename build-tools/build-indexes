@@ -137,6 +137,7 @@ function requireNoCache(pathSpec) {
 	const allDexes = [
 		Dex,
 		Dex.mod('gen9hellskitchen'),
+		Dex.mod('gen9plasticpyrite'),
 		Dex.mod('gen3puffypink'),
 		Dex.mod('gen9altermons'),
 		Dex.mod('gen9ironfist'),
@@ -330,7 +331,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		3.1, 3.11,
 
 		// mods
-		9.11, 3.12, 9.13, 9.14, 9.15, 9.16, 9.17, 9.18
+		9.11, 9.12, 3.13, 9.14, 9.15, 9.16, 9.17, 9.18, 9.19
 	];
 
 	// process.stdout.write("\n  ");
@@ -357,13 +358,14 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		const isFRLG = genIdent === 3.11;
 		
 		const isHellsKitchen = genIdent === 9.11;
-		const isPuffyPink = genIdent === 3.12;
-		const isAltermons = genIdent === 9.13;
-		const isIronFist = genIdent === 9.14;
-		const isTypeShift = genIdent === 9.15;
-		const isPTest = genIdent === 9.16;
-		const isWordmons = genIdent === 9.17;
-		const isBuildmons = genIdent === 9.18;
+		const isPlasticPyrite = genIdent === 9.12;
+		const isPuffyPink = genIdent === 3.13;
+		const isAltermons = genIdent === 9.14;
+		const isIronFist = genIdent === 9.15;
+		const isTypeShift = genIdent === 9.16;
+		const isPTest = genIdent === 9.17;
+		const isWordmons = genIdent === 9.18;
+		const isBuildmons = genIdent === 9.19;
 		
 		const gen = (() => {
 			let genStr = 'gen' + genNum;
@@ -379,6 +381,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			if (isFRLG) genStr += 'frlg';
 			if (isChampions || isNDChampions) genStr = 'champions';
 			if (isHellsKitchen) genStr += 'hellskitchen';
+			if (isPlasticPyrite) genStr += 'plasticpyrite';
 			if (isPuffyPink) genStr += 'puffypink';
 			if (isAltermons) genStr += 'altermons';
 			if (isIronFist) genStr += 'ironfist';
@@ -650,6 +653,14 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			BattleTeambuilderTable['gen9hellskitchen'].metagameBans = metagameBans;
 			BattleTeambuilderTable['gen9hellskitchen'].overrideTier = overrideTier;
 			BattleTeambuilderTable['gen9hellskitchen'].formatSlices = formatSlices;
+		} else if (isPlasticPyrite) {
+			BattleTeambuilderTable['gen9plasticpyrite'] = {};
+			BattleTeambuilderTable['gen9plasticpyrite'].learnsets = {};
+			BattleTeambuilderTable['gen9plasticpyrite'].tiers = tiers;
+			BattleTeambuilderTable['gen9plasticpyrite'].items = items;
+			BattleTeambuilderTable['gen9plasticpyrite'].metagameBans = metagameBans;
+			BattleTeambuilderTable['gen9plasticpyrite'].overrideTier = overrideTier;
+			BattleTeambuilderTable['gen9plasticpyrite'].formatSlices = formatSlices;
 		} else if (isPuffyPink) {
 			BattleTeambuilderTable['gen3puffypink'] = {};
 			BattleTeambuilderTable['gen3puffypink'].learnsets = {};
@@ -1246,6 +1257,23 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		}
 	}
 
+	const PlasticPyriteLearnsets = Dex.mod('gen9plasticpyrite').data.Learnsets;
+	for (const id in PlasticPyriteLearnsets) {
+		const species = Dex.mod('gen9plasticpyrite').species.get(id);
+		if (species.isNonstandard && !['Unobtainable', 'CAP', 'Past', 'Modded'].includes(species.isNonstandard)) continue;
+		const learnset = PlasticPyriteLearnsets[id].learnset;
+		if (!learnset) continue;
+		BattleTeambuilderTable['gen9plasticpyrite'].learnsets[id] = {};
+		for (const moveid in learnset) {
+			if (moveid in BattleTeambuilderTable['gen9plasticpyrite'].learnsets[id]) {
+				if (BattleTeambuilderTable['gen9plasticpyrite'].learnsets[id][moveid].includes('9')) continue;
+				BattleTeambuilderTable['gen9plasticpyrite'].learnsets[id][moveid] += '9a';
+			} else {
+				BattleTeambuilderTable['gen9plasticpyrite'].learnsets[id][moveid] = '9a';
+			}
+		}
+	}
+
 	BattleTeambuilderTable['gen3puffypink'].learnsets = {};
 	const PuffyPinkLearnsets = Dex.mod('gen3puffypink').data.Learnsets;
 	for (const id in PuffyPinkLearnsets) {
@@ -1687,7 +1715,7 @@ process.stdout.write("Building `data/pokedex.js`... ");
 	const Pokedex = { ...BasePokedex };
 
 	// Merge modded species data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9ptest', 'gen9wordmons', 'gen9buildmons'];
+	const mods = ['gen9hellskitchen', 'gen9plasticpyrite', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9ptest', 'gen9wordmons', 'gen9buildmons'];
 	for (const mod of mods) {
 		const modPokedex = Dex.mod(mod).data.Pokedex;
 		for (const id in modPokedex) {
@@ -1715,7 +1743,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Moves = { ...BaseMoves };
 
 	// Merge modded move data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9wordmons', 'gen9buildmons'];
+	const mods = ['gen9hellskitchen', 'gen9plasticpyrite', 'gen3puffypink', 'gen9altermons', 'gen9ironfist', 'gen9typeshift', 'gen9wordmons', 'gen9buildmons'];
 	for (const mod of mods) {
 		const modMoves = Dex.mod(mod).data.Moves;
 		for (const id in modMoves) {
@@ -1743,7 +1771,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Items = { ...BaseItems };
 
 	// Merge modded item data
-	const mods = ['gen9hellskitchen', 'gen9ironfist', 'gen9wordmons', 'gen9buildmons'];
+	const mods = ['gen9hellskitchen', 'gen9plasticpyrite', 'gen9ironfist', 'gen9wordmons', 'gen9buildmons'];
 	for (const mod of mods) {
 		const modItems = Dex.mod(mod).data.Items;
 		for (const id in modItems) {
@@ -1771,7 +1799,7 @@ process.stdout.write("Building `data/moves,items,abilities,typechart,learnsets.j
 	const Abilities = { ...BaseAbilities };
 
 	// Merge modded ability data
-	const mods = ['gen9hellskitchen', 'gen3puffypink', 'gen9ironfist', 'gen9wordmons', 'gen9buildmons'];
+	const mods = ['gen9hellskitchen', 'gen9plasticpyrite', 'gen3puffypink', 'gen9ironfist', 'gen9wordmons', 'gen9buildmons'];
 	for (const mod of mods) {
 		const modAbilities = Dex.mod(mod).data.Abilities;
 		for (const id in modAbilities) {
