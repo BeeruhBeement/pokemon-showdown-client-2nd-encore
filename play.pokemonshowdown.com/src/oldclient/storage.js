@@ -1162,15 +1162,17 @@ Storage.packedTeamNames = function (buf) {
 	return team;
 };
 
-Storage.packedTeamIcons = function (buf) {
+Storage.packedTeamIcons = function (buf, format) {
 	if (!buf) return '<em>(empty team)</em>';
 
+	var dex = Dex.forFormat(format || 'gen9');
 	return this.packedTeamNames(buf).map(function (species) {
-		return '<span class="picon" style="' + Dex.getPokemonIcon(species) + '"><span style="font-size:0px">' + toID(species) + '</span></span>';
+		return '<span class="picon" style="' + Dex.getPokemonIcon(species, false, dex) + '"><span style="font-size:0px">' + toID(species) + '</span></span>';
 	}).join('');
 };
 
 Storage.getTeamIcons = function (team) {
+	var format = team.format || ('gen' + (team.gen || 9));
 	if (team.iconCache === '!') {
 		// an icon cache of '!' means that not only are the icons not cached,
 		// but the packed team isn't guaranteed to be updated to the latest
@@ -1182,12 +1184,14 @@ Storage.getTeamIcons = function (team) {
 		// a packed team.
 		team.team = Storage.packTeam(Storage.activeSetList);
 		if ('teambuilder' in app.rooms) {
-			return Storage.packedTeamIcons(team.team);
+			return Storage.packedTeamIcons(team.team, format);
 		}
 		Storage.activeSetList = null;
-		team.iconCache = Storage.packedTeamIcons(team.team);
-	} else if (!team.iconCache) {
-		team.iconCache = Storage.packedTeamIcons(team.team);
+		team.iconCache = Storage.packedTeamIcons(team.team, format);
+		team.iconCacheFormat = format;
+	} else if (!team.iconCache || team.iconCacheFormat !== format) {
+		team.iconCache = Storage.packedTeamIcons(team.team, format);
+		team.iconCacheFormat = format;
 	}
 	return team.iconCache;
 };
