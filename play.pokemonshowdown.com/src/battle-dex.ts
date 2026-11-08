@@ -1206,7 +1206,8 @@ export const Dex = new class implements ModdedDex {
 	getTeambuilderSpriteData(pokemon: any, dex: ModdedDex = Dex): TeambuilderSpriteData {
 		let gen = dex.gen;
 		let id = toID(pokemon.species || pokemon);
-		let species = Dex.species.get(id);
+		const moddedSpriteMod = this.getModdedSpriteDataMod(id, 'species', dex);
+		let species = moddedSpriteMod ? dex.species.get(id) : Dex.species.get(id);
 		let spriteid: string;
 		if (typeof pokemon === 'string') {
 			spriteid = species.spriteid || id;
@@ -1242,7 +1243,8 @@ export const Dex = new class implements ModdedDex {
 		let homeExists = (!species.isNonstandard || !['CAP', 'Custom'].includes(species.isNonstandard) ||
 			species.id === "xerneasneutral") && ![
 			"floetteeternal", "pichuspikyeared", "pikachubelle", "pikachucosplay", "pikachulibre", "pikachuphd", "pikachupopstar", "pikachurockstar",
-		].includes(species.id) && !(species.isMega && species.gen === 9);
+		].includes(species.id) && !(species.isMega && species.gen === 9 &&
+			!this.getModdedSpriteDataMod(id, 'species', dex));
 		if (gen >= 8 && homeExists) {
 			spriteData.spriteDir = 'sprites/home-centered';
 			spriteData.x = 8;
@@ -1293,7 +1295,7 @@ export const Dex = new class implements ModdedDex {
 			const spriteName = data.spriteid + (mod === 'gen9plasticpyrite' && data.nightmare ? '-nightmare' : '');
 			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + mod + '/front' + shiny + '/' + spriteName + '.png';
 			const tinyOffset = mod === 'gen9plasticpyrite' && data.tiny ? 10 : 0;
-			return `background-image:url('${url}');background-position:${data.x + xOffset + tinyOffset}px ${data.y + yOffset + tinyOffset}px;background-repeat:no-repeat;${resize}`;
+			return `background-image:url('${url}');background-position:${data.x + xOffset + tinyOffset}px ${data.y + yOffset + tinyOffset}px;background-repeat:no-repeat;image-rendering:pixelated;${resize}`;
 		}
 
 		return `background-image:url(${Dex.resourcePrefix}${data.spriteDir}${shiny}/${data.spriteid}.png);background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
@@ -1318,7 +1320,7 @@ export const Dex = new class implements ModdedDex {
 				(typeof activeDex === 'string' ? toID(activeDex) : activeDex?.modid) ||
 				((window as any).app?.rooms?.teambuilder?.curTeam?.dex?.modid || null);
 			if (mod && mod !== 'gen9') {
-				return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${mod}/items/${itemId}.png') no-repeat scroll 0 0`;
+				return `background:transparent url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/${mod}/items/${itemId}.png') center center / contain no-repeat`;
 			}
 			if (itemId) {
 				return `background:transparent url(${Dex.resourcePrefix}sprites/items/${itemId}.png) no-repeat scroll 0 0`;

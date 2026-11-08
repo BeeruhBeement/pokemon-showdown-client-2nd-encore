@@ -2133,6 +2133,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 		if (this.formatType?.startsWith('svdlc1')) lsetTable = lsetTable['gen9dlc1'];
 		while (learnsetid) {
 			let learnset = lsetTable.learnsets[learnsetid];
+			let isNatDex = this.formatType?.includes('natdex') || this.formatType?.includes("hellskitchen") || this.formatType?.includes("plasticpyrite") || this.formatType?.includes("altermons") || this.formatType?.includes("ironfist") || this.formatType?.includes("ptest") || this.formatType?.includes("typeshift");
 			if (learnset) {
 				for (let moveid in learnset) {
 					let learnsetEntry = learnset[moveid];
@@ -2153,7 +2154,7 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 					) {
 						continue;
 					}
-					if ((!this.formatType?.includes('natdex') && !this.formatType?.includes("hellskitchen") && !this.formatType?.includes("altermons") && !this.formatType?.includes("ironfist") && !this.formatType?.includes("ptest") && !this.formatType?.includes("typeshift")) && move.isNonstandard === "Past") {
+					if (!isNatDex && move.isNonstandard === "Past") {
 						continue;
 					}
 					if (
@@ -2181,12 +2182,14 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 						moves.push(
 							'hiddenpowerbug', 'hiddenpowerdark', 'hiddenpowerdragon', 'hiddenpowerelectric', 'hiddenpowerfighting', 'hiddenpowerfire', 'hiddenpowerflying', 'hiddenpowerghost', 'hiddenpowergrass', 'hiddenpowerground', 'hiddenpowerice', 'hiddenpowerpoison', 'hiddenpowerpsychic', 'hiddenpowerrock', 'hiddenpowersteel', 'hiddenpowerwater'
 						);
+						if (this.formatType === 'plasticpyrite') moves.push('hiddenpowerfairy');
 					}
 				}
 			}
 			learnsetid = this.nextLearnsetid(learnsetid, species.id, true);
 		}
 		if (sketch || isHackmons) {
+			let isNatDex = this.formatType === 'natdex' || this.formatType === 'hellskitchen' || this.formatType === 'altermons' || this.formatType === 'ironfist' || this.formatType === 'plasticpyrite';
 			if (isHackmons) moves = [];
 			for (let id in BattleMovedex) {
 				if (!format.startsWith('cap') && (id === 'paleowave' || id === 'shadowstrike')) continue;
@@ -2195,13 +2198,13 @@ class BattleMoveSearch extends BattleTypedSearch<'move'> {
 				if (sketch) {
 					if (move.flags['nosketch'] || move.isMax || move.isZ) continue;
 					if (move.isNonstandard && move.isNonstandard !== 'Past') continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen' && this.formatType !== 'altermons' && this.formatType !== 'ironfist') continue;
+					if (move.isNonstandard === 'Past' && !isNatDex) continue;
 					sketchMoves.push(move.id);
 				} else {
 					if (!(dex.gen < 8 || this.formatType === 'natdex' || this.formatType === 'hellskitchen' || this.formatType === 'altermons') && move.isZ) continue;
 					if (typeof move.isMax === 'string') continue;
 					if (move.isMax && dex.gen > 8) continue;
-					if (move.isNonstandard === 'Past' && this.formatType !== 'natdex' && this.formatType !== 'hellskitchen' && this.formatType !== 'altermons' && this.formatType !== 'ironfist') continue;
+					if (move.isNonstandard === 'Past' && !isNatDex) continue;
 					if (move.isNonstandard === 'LGPE' && this.formatType !== 'letsgo') continue;
 					moves.push(move.id);
 				}

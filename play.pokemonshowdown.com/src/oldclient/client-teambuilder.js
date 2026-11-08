@@ -1297,6 +1297,9 @@
 			var isVGC = baseFormat.includes('battlespot') || baseFormat.includes('bss') ||
 				baseFormat.includes('vgc') || baseFormat.includes('battlefestival');
 			var isLC = baseFormat.startsWith('lc') || baseFormat.endsWith('lc');
+			
+			var isPlasticPyrite = baseFormat.includes('plasticpyrite');
+
 			var buf = '<li value="' + i + '">';
 			if (!set.species) {
 				if (this.deletedSet) {
@@ -1337,7 +1340,7 @@
 				buf += '<span class="detailcell"><label>Gender</label>' + GenderChart[set.gender || species.gender || 'N'] + '</span>';
 				if (isLetsGo) {
 					buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 70) + '</span>';
-				} else if (this.curTeam.gen < 8 || isNatDex) {
+				} else if (this.curTeam.gen < 8 || isNatDex || isPlasticPyrite) {
 					buf += '<span class="detailcell"><label>Happiness</label>' + (typeof set.happiness === 'number' ? set.happiness : 255) + '</span>';
 				}
 				buf += '<span class="detailcell"><label>Shiny</label>' + (set.shiny ? 'Yes' : 'No') + '</span>';
@@ -1367,7 +1370,7 @@
 				}
 				if (this.curTeam.format.includes('buildmons')) {
 					buf += '<span class="detailcell"><label>Base Power Points</label>' + species.weightkg + '</span>';
-				} else if (this.curTeam.gen === 9 && !isChampions) {
+				} else if (this.curTeam.gen === 9 && !isChampions && !isPlasticPyrite) {
 					buf += '<span class="detailcell"><label>Tera Type</label>' + (set.teraType || species.requiredTeraType || species.types[0]) + '</span>';
 				}
 			}
@@ -2678,6 +2681,9 @@
 							hpIVs = ['000001', '111000', '101000']; break;
 						case 'fighting':
 							hpIVs = ['001000', '110000', '100000']; break;
+						
+						case 'fairy':
+							hpIVs = ['111111']; break;
 						}
 						buf += '<div style="margin-left:-80px;text-align:right"><select name="ivspread" class="button">';
 						buf += '<option value="" selected>HP ' + hpType.charAt(0).toUpperCase() + hpType.slice(1) + ' IVs</option>';
@@ -2940,7 +2946,9 @@
 				}
 			}
 			if (!hasHiddenPower) return;
-			var hpTypes = ['Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug', 'Ghost', 'Steel', 'Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark'];
+			var hpTypes = ['Fighting', 'Flying', 'Poison', 'Ground', 'Rock', 'Bug', 'Ghost', 'Steel', 'Fire', 'Water', 'Grass', 'Electric', 'Psychic', 'Ice', 'Dragon', 'Dark',
+				'Fairy'
+			];
 			var hpType;
 			if (this.curTeam.gen <= 2) {
 				var hpDV = Math.floor(set.ivs.hp / 2);
@@ -3087,7 +3095,7 @@
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
 			var isPlasticPyrite = this.curTeam.format.includes('plasticpyrite');
-			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex') || this.curTeam.format.includes('hellskitchen') || this.curTeam.format.includes('altermons') || this.curTeam.format.includes('ironfist') || this.curTeam.format.includes('typeshift') || this.curTeam.format.includes('ptest');
+			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex') || this.curTeam.format.includes('hellskitchen') || this.curTeam.format.includes('altermons') || this.curTeam.format.includes('ironfist') || this.curTeam.format.includes('typeshift') || this.curTeam.format.includes('ptest') || this.curTeam.format.includes('plasticpyrite');
 			var isHackmons = this.curTeam.format.includes('hackmons') || this.curTeam.format.endsWith('bh');
 
 			var species = this.curTeam.dex.species.get(set.species);
@@ -3183,7 +3191,7 @@
 
 			if (this.curTeam.format.includes('buildmons')) {
 				buf += '<div class="formrow"><label class="formlabel">Base Power Points:</label><div>' + species.weightkg + '</div></div>';
-			} else if (this.curTeam.gen === 9 && !isChampions) {
+			} else if (this.curTeam.gen === 9 && !isChampions && !isPlasticPyrite) {
 				buf += '<div class="formrow"><label class="formlabel" title="Tera Type">Tera Type:</label><div>';
 				buf += '<select name="teratype" class="button">';
 				var types = Dex.types.all();
@@ -3211,6 +3219,8 @@
 			var isLetsGo = this.curTeam.format.includes('letsgo');
 			var isBDSP = this.curTeam.format.includes('bdsp');
 			var isNatDex = this.curTeam.format.includes('nationaldex') || this.curTeam.format.includes('natdex');
+
+			var isPlasticPyrite = this.curTeam.format.includes('plasticpyrite')
 
 			// level
 			var level = parseInt(this.$chart.find('input[name=level]').val(), 10);
@@ -3325,7 +3335,7 @@
 				}
 				if (this.curTeam.format.includes('buildmons')) {
 					buf += '<span class="detailcell"><label>Base Power Points</label>' + species.weightkg + '</span>';
-				} else if (this.curTeam.gen === 9 && !isChampions) {
+				} else if (this.curTeam.gen === 9 && !isChampions & !isPlasticPyrite) {
 					buf += '<span class="detailcell"><label>Tera Type</label>' + (set.teraType || species.requiredTeraType || species.types[0]) + '</span>';
 				}
 			}

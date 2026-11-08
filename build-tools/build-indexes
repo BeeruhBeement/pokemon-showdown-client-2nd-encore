@@ -837,7 +837,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				continue;
 			}
 			if (item.isNonstandard && !isMetBattle) {
-				if (isNatDex || isNDChampions || isHellsKitchen || isIronFist || isTypeShift || isAltermons) {
+				if (isNatDex || isNDChampions || isHellsKitchen || isIronFist || isTypeShift || isAltermons || isPlasticPyrite) {
 					let curItem = item;
 					let curGen = genNum;
 					while (curItem.isNonstandard && curGen >= 7) {
@@ -1539,7 +1539,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 		'accuracy', 'basePower', 'category', 'flags', 'isNonstandard', 'pp', 'priority', 'target', 'type',
 	];
 	const overrideAbilityKeys = ['flags', 'isNonstandard', 'rating'];
-	const overrideItemKeys = ['fling', 'isNonstandard', 'naturalGift'];
+	const overrideItemKeys = ['fling', 'isNonstandard', 'itemUser', 'naturalGift'];
 
 	//
 	// Past gen table
