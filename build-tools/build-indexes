@@ -837,7 +837,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 				continue;
 			}
 			if (item.isNonstandard && !isMetBattle) {
-				if (isNatDex || isNDChampions || isHellsKitchen || isIronFist || isTypeShift || isAltermons || isPlasticPyrite) {
+				if (isNatDex || isNDChampions || isHellsKitchen || isIronFist || isTypeShift || isAltermons || (isPlasticPyrite && item.isNonstandard !== 'Future')) {
 					let curItem = item;
 					let curGen = genNum;
 					while (curItem.isNonstandard && curGen >= 7) {

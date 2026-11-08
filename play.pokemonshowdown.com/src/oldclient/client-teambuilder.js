@@ -4156,7 +4156,13 @@
 				var spriteDim = 'width: ' + spriteSize + 'px; height: ' + spriteSize + 'px;';
 				var resize = (data.h ? 'background-size:' + data.h + 'px;' : '');
 				buf += '<button name="setForm" value="' + form + '" style="';
-				buf += 'background-image: url(' + Dex.resourcePrefix + data.spriteDir + '/' + spriteid + '.png); ' + spriteDim + resize + '" class="option';
+				var mod = Dex.getModdedSpriteDataMod(toID(spriteid), 'species', dex);
+				if (mod) {
+					buf += "background-image:url('https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/" + mod + "/front/" + data.spriteid + ".png');background-position:center;background-size:96px 96px;background-repeat:no-repeat;image-rendering:pixelated;";
+				} else {
+					buf += 'background-image:url(' + Dex.resourcePrefix + data.spriteDir + '/' + spriteid + '.png); ' + resize;
+				}
+				buf += spriteDim + '" class="option';
 				if (data.pixelated) buf += ' pixelated';
 				buf += (form === (species.forme || '') ? ' cur' : '') + '"></button>';
 			}
