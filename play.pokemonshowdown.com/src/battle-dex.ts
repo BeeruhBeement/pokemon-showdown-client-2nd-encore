@@ -1066,8 +1066,8 @@ export const Dex = new class implements ModdedDex {
 			spriteData.pixelated = true;
 			spriteData.gen = 5;
 			if (activeMod === 'gen9plasticpyrite' && options.tiny) {
-				spriteData.w *= 0.5;
-				spriteData.h *= 0.5;
+				spriteData.w *= 0.75;
+				spriteData.h *= 0.75;
 			}
 			return spriteData;
 		}
