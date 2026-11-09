@@ -858,6 +858,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			case 'choiceband':
 			case 'choicespecs':
 			case 'eviolite':
+			case 'miraclite':
 				greatItems.push(id);
 				break;
 			// great everywhere but metronome
@@ -877,6 +878,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			case 'heavydutyboots':
 			case 'expertbelt':
 			case 'salacberry':
+			case 'lightupshoes':
 				if (isDoubles || isMetBattle) goodItems.push(id);
 				else greatItems.push(id);
 				break;

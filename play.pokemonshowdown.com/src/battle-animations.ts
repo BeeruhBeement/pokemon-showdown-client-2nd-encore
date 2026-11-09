@@ -2878,6 +2878,13 @@ export class PokemonSprite extends Sprite {
 			buf += ` <img src="${Dex.resourcePrefix}sprites/types/Tera${pokemon.terastallized}.png" alt="Tera-${pokemon.terastallized}" style="vertical-align:text-bottom;" height="16" width="16" />`;
 		}
 
+		if (pokemon.tiny) {
+			buf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/tiny.png" alt="Tiny" style="vertical-align:text-bottom;" height="16" width="16" />`;
+		}
+		if (pokemon.nightmare) {
+			buf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/nightmare.png" alt="Nightmare" style="vertical-align:text-bottom;" height="16" width="16" />`;
+		}
+
 		buf += `</strong><div class="hpbar"><div class="hptext"></div><div class="hptextborder"></div><div class="prevhp"><div class="hp"></div></div><div class="status"></div>`;
 		buf += `</div>`;
 		return buf;

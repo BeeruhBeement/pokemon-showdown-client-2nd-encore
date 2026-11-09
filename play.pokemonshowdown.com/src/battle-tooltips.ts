@@ -1368,6 +1368,12 @@ export class BattleTooltips {
 			stats.def = Math.floor(stats.def * 1.5);
 			stats.spd = Math.floor(stats.spd * 1.5);
 		}
+		
+		if (item === 'miraclite' && this.battle.dex.species.get(serverPokemon.speciesForme).nfe) {
+			stats.atk = Math.floor(stats.atk * 1.5);
+			stats.spa = Math.floor(stats.spa * 1.5);
+		}
+
 		if (ability === 'grasspelt' && this.battle.hasPseudoWeather('Grassy Terrain')) {
 			stats.def = Math.floor(stats.def * 1.5);
 		}
@@ -1550,6 +1556,16 @@ export class BattleTooltips {
 			} else {
 				stats.spe = Math.floor(stats.spe * 0.25);
 			}
+		}
+
+		if (pokemon.tiny) {
+			stats.spe = Math.floor(stats.spe * 1.2);
+		}
+		if (pokemon.nightmare) {
+			stats.atk = Math.floor(stats.atk * 1.2);
+			stats.spa = Math.floor(stats.spa * 1.2);
+			stats.def = Math.floor(stats.def * 0.8);
+			stats.spd = Math.floor(stats.spd * 0.8);
 		}
 
 		return stats;
