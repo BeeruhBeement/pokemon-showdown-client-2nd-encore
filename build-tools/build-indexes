@@ -869,6 +869,7 @@ process.stdout.write("Building `data/teambuilder-tables.js`... ");
 			case 'focussash':
 			case 'powerherb':
 			case 'rockyhelmet':
+			case 'twontontonic':
 				if (!isMetBattle) greatItems.push(id);
 				else goodItems.push(id);
 				break;

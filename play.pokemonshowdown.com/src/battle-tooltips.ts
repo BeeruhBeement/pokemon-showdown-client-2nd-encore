@@ -1445,6 +1445,16 @@ export class BattleTooltips {
 			}
 		}
 
+		if (pokemon.tiny) {
+			stats.spe = Math.floor(stats.spe * 1.2);
+		}
+		if (pokemon.nightmare) {
+			stats.atk = Math.floor(stats.atk * 1.2);
+			stats.def = Math.floor(stats.def * 0.8);
+			stats.spa = Math.floor(stats.spa * 1.2);
+			stats.spd = Math.floor(stats.spd * 0.8);
+		}
+
 		// SSB
 		if (this.battle.tier.includes('Super Staff Bros')) {
 			if (pokemon.name === 'Felucia') {
@@ -1556,16 +1566,6 @@ export class BattleTooltips {
 			} else {
 				stats.spe = Math.floor(stats.spe * 0.25);
 			}
-		}
-
-		if (pokemon.tiny) {
-			stats.spe = Math.floor(stats.spe * 1.2);
-		}
-		if (pokemon.nightmare) {
-			stats.atk = Math.floor(stats.atk * 1.2);
-			stats.spa = Math.floor(stats.spa * 1.2);
-			stats.def = Math.floor(stats.def * 0.8);
-			stats.spd = Math.floor(stats.spd * 0.8);
 		}
 
 		return stats;
@@ -1765,6 +1765,15 @@ export class BattleTooltips {
 			ev0 = tr(tr((2 * baseSpe + 31) * level / 100 + 5));
 			min = isCGT ? max : tr(tr(2 * baseSpe * level / 100 + 5) * minNatureMult);
 		}
+
+		if (pokemon.tiny) {
+			max = tr(max * 1.2);
+			ev252 = tr(ev252 * 1.2);
+			ev84 = tr(ev84 * 1.2);
+			ev0 = tr(ev0 * 1.2);
+			min = tr(min * 1.2);
+		}
+
 		return { min, ev0, ev84, ev252, max };
 	}
 
