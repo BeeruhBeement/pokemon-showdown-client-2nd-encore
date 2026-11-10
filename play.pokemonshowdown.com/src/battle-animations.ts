@@ -904,6 +904,12 @@ export class BattleScene implements BattleSceneStub {
 				if (gender === 'M' || gender === 'F') {
 					buf2 += `<img src="${Dex.fxPrefix}gender-${gender.toLowerCase()}.png" alt="${gender}" width="7" height="10" class="pixelated" style="margin-bottom:-1px" /> `;
 				}
+				if (pokemon.tiny) {
+					buf2 += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/tiny.png" alt="Tiny" style="vertical-align:text-bottom;" height="16" width="16" />`;
+				}
+				if (pokemon.nightmare) {
+					buf2 += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/nightmare.png" alt="Nightmare" style="vertical-align:text-bottom;" height="16" width="16" />`;
+				}
 				if (pokemon.level !== 100) {
 					buf2 += `<span style="text-shadow:#000 1px 1px 0,#000 1px -1px 0,#000 -1px 1px 0,#000 -1px -1px 0"><small>L</small>${pokemon.level}</span>`;
 				}
@@ -2874,15 +2880,16 @@ export class PokemonSprite extends Sprite {
 		if (symbol) {
 			buf += ` <img src="${Dex.resourcePrefix}sprites/misc/${symbol}.png" alt="${symbol}" style="vertical-align:text-bottom;" />`;
 		}
-		if (pokemon.terastallized) {
-			buf += ` <img src="${Dex.resourcePrefix}sprites/types/Tera${pokemon.terastallized}.png" alt="Tera-${pokemon.terastallized}" style="vertical-align:text-bottom;" height="16" width="16" />`;
-		}
 
 		if (pokemon.tiny) {
 			buf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/tiny.png" alt="Tiny" style="vertical-align:text-bottom;" height="16" width="16" />`;
 		}
 		if (pokemon.nightmare) {
 			buf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/nightmare.png" alt="Nightmare" style="vertical-align:text-bottom;" height="16" width="16" />`;
+		}
+		
+		if (pokemon.terastallized) {
+			buf += ` <img src="${Dex.resourcePrefix}sprites/types/Tera${pokemon.terastallized}.png" alt="Tera-${pokemon.terastallized}" style="vertical-align:text-bottom;" height="16" width="16" />`;
 		}
 
 		buf += `</strong><div class="hpbar"><div class="hptext"></div><div class="hptextborder"></div><div class="prevhp"><div class="hp"></div></div><div class="status"></div>`;

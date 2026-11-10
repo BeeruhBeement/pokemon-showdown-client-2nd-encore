@@ -924,6 +924,13 @@ export class BattleTooltips {
 			genderBuf = ` <img src="${Dex.fxPrefix}gender-${gender.toLowerCase()}.png" alt="${BattleLog.escapeHTML(genderName)}" width="7" height="10" class="pixelated" /> `;
 		}
 
+		if (pokemon.tiny) {
+			genderBuf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/tiny.png" alt="Tiny" style="vertical-align:text-bottom;" height="16" width="16" />`;
+		}
+		if (pokemon.nightmare) {
+			genderBuf += ` <img src="https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/effects/nightmare.png" alt="Nightmare" style="vertical-align:text-bottom;" height="16" width="16" />`;
+		}
+
 		const nickname = this.getNickname(pokemon);
 		let name = BattleLog.escapeHTML(nickname);
 		const speciesName = TL(this.battle.dex.species.get(pokemon.speciesForme));
