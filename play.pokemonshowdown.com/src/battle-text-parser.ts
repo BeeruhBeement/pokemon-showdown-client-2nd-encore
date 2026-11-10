@@ -148,6 +148,7 @@ export class BattleTextParser {
 			}
 			if ([
 				'bind', 'wrap', 'clamp', 'whirlpool', 'firespin', 'magmastorm', 'sandtomb', 'infestation', 'snaptrap', 'thundercage', 'trapped',
+				'maelstrom'
 			].includes(id)) {
 				return { args: ['-start', pokemon, effect], kwArgs: { of: target } };
 			}
