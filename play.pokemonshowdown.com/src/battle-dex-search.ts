@@ -1752,15 +1752,22 @@ class BattleItemSearch extends BattleTypedSearch<'item'> {
 		const abilityItem = {
 			protosynthesis: 'boosterenergy',
 			quarkdrive: 'boosterenergy',
-			// poisonheal: 'toxicorb',
-			// toxicboost: 'toxicorb',
-			// flareboost: 'flameorb',
+			poisonheal: 'toxicorb',
+			toxicboost: 'toxicorb',
+			flareboost: 'flameorb',
+    		guts: ['flameorb', 'frostorb'],
+    		burnbothends: ['flameorb', 'frostorb'],
+    		quickfeet: ['flameorb', 'frostorb'],
 		}[toID(this.set?.ability) as string];
 		for (const row of results) {
 			if (row[0] !== 'item') continue;
 			const item = this.dex.items.get(row[1]);
 			if (item.itemUser?.includes(speciesName)) speciesSpecific.push(row);
-			if (abilityItem === item.id) abilitySpecific.push(row);
+			if (Array.isArray(abilityItem)) {
+				if (abilityItem.includes(item.id)) abilitySpecific.push(row);
+			} else if (abilityItem === item.id) {
+				abilitySpecific.push(row);
+			}
 		}
 		if (speciesSpecific.length) {
 			return [

@@ -1290,12 +1290,13 @@ export const Dex = new class implements ModdedDex {
 		const mod = this.getModdedSpriteDataMod(toID(pokemon.species || pokemon), 'species', dex);
 		const resize = (mod === 'gen9plasticpyrite' && data.tiny ?
 			'background-size:80px 80px;' : (data.h ? `background-size:${data.h}px` : ''));
+		const rendering = (mod !== 'gen9hellskitchen' ? 'image-rendering:pixelated;' : '');
 
 		if (mod) {
 			const spriteName = data.spriteid + (mod === 'gen9plasticpyrite' && data.nightmare ? '-nightmare' : '');
 			const url = 'https://raw.githubusercontent.com/BeeruhBeement/pokemon-showdown-sprites/refs/heads/main/' + mod + '/front' + shiny + '/' + spriteName + '.png';
 			const tinyOffset = mod === 'gen9plasticpyrite' && data.tiny ? 10 : 0;
-			return `background-image:url('${url}');background-position:${data.x + xOffset + tinyOffset}px ${data.y + yOffset + tinyOffset}px;background-repeat:no-repeat;image-rendering:pixelated;${resize}`;
+			return `background-image:url('${url}');background-position:${data.x + xOffset + tinyOffset}px ${data.y + yOffset + tinyOffset}px;background-repeat:no-repeat;${rendering}${resize}`;
 		}
 
 		return `background-image:url(${Dex.resourcePrefix}${data.spriteDir}${shiny}/${data.spriteid}.png);background-position:${data.x + xOffset}px ${data.y + yOffset}px;background-repeat:no-repeat;${resize}`;
